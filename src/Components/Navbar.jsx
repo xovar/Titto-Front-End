@@ -36,7 +36,7 @@ function Navbar() {
 
   return (
     <div
-      className={`flex justify-between lg:justify-around transition-all duration-300 h-20 items-center px-6 lg:px-4 sticky top-0 z-50 [box-shadow:0_0_15px_rgba(239,68,68,0.4)] [animation:pulse-glow_3s_infinite_alternate] 
+      className={`flex justify-between lg:justify-around transition-all duration-300 h-20 items-center px-6 lg:px-4 sticky top-0 z-50 [box-shadow:0_0_15px_rgba(239,68,68,0.4)] animate-[pulse-glow_3s_infinite_alternate] 
       ${isScrolled ? "bg-black" : "bg-white"}`}
     >
       <style>{`
@@ -47,7 +47,7 @@ function Navbar() {
       `}</style>
 
       {/* Logo Section */}
-      <div className="z-50 flex-shrink-0">
+      <div className="z-50 shrink-0">
         <img src={logo} width="100px" alt="Titto Logo" />
       </div>
 
