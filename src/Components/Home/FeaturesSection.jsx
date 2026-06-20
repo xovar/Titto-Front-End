@@ -20,7 +20,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <div className="w-full bg-white py-16 px-4 md:px-8">
+    <div className="w-full bg-white py-16 px-4 md:px-8 md:block hidden">
       
       {/* Custom spinning/scaling animation for the dashed border on hover */}
       <style>{`
