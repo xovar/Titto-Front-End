@@ -36,46 +36,10 @@ const products = [
     maxPrice: null,
     discount: null,
     image: "https://htmldemo.net/shome/shome/assets/img/shop/product-single/1.webp",
-  },
-  {
-    id: 5,
-    name: "Primitive Mens shoes",
-    category: "Men/Women",
-    minPrice: 500.0,
-    maxPrice: null,
-    discount: null,
-    image: "https://htmldemo.net/shome/shome/assets/img/shop/product-single/1.webp",
-  },
-  {
-    id: 6,
-    name: "New Womens High Hills",
-    category: "Men/Women",
-    minPrice: 300.0,
-    maxPrice: 333.0,
-    discount: "-10%",
-    image: "https://htmldemo.net/shome/shome/assets/img/shop/product-single/1.webp",
-  },
-  {
-    id: 7,
-    name: "Simple Fabric Shoe",
-    category: "Men/Women",
-    minPrice: 133.0,
-    maxPrice: null,
-    discount: null,
-    image: "https://htmldemo.net/shome/shome/assets/img/shop/product-single/1.webp",
-  },
-  {
-    id: 8,
-    name: "exclusive mens shoe",
-    category: "Men/Women",
-    minPrice: 300.0,
-    maxPrice: 420.0,
-    discount: "-10%",
-    image: "https://htmldemo.net/shome/shome/assets/img/shop/product-single/1.webp",
-  },
+  }
 ];
 
-export default function FeaturedItems() {
+export default function BestSeller() {
   return (
     <div className="w-full bg-white py-16 px-4 md:px-12 lg:px-16 font-sans select-none cursor-pointer">
       <div className="max-w-360 mx-auto">
@@ -158,6 +122,9 @@ export default function FeaturedItems() {
           ))}
         </div>
 
+      </div>
+      <div className="mt-12.5 flex justify-center">
+        <button className="cursor-pointer border border-solid border-red-500 text-red-500 bg-transparent hover:bg-red-500 hover:text-white transition px-4 py-2 uppercase font-bold"> See More </button>
       </div>
     </div>
   );

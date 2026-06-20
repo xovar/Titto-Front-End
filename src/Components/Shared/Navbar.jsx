@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import logo from "../assets/titto.logo.png";
+import logo from "../../assets/titto.logo.png";
 import { FaRegHeart, FaBars, FaTimes } from "react-icons/fa";
 import { MdOutlineShoppingCart, MdOutlinePerson } from "react-icons/md";
 import { useEffect, useState } from "react";

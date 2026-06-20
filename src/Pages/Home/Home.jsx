@@ -1,13 +1,13 @@
-import CategoryShowcase from "../../Components/CategoryShowcase";
-import FeaturesSection from "../../Components/FeaturesSection";
-import HeroSlider from "../../Components/HeroSlider";
+import BestSeller from "../../Components/Home/BestSeller";
+import FeaturesSection from "../../Components/Home/FeaturesSection";
+import HeroSlider from "../../Components/Home/HeroSlider";
 
 function Home() {
   return (
     <>
       <HeroSlider />
       <FeaturesSection />
-      <CategoryShowcase />
+      <BestSeller />
     </>
   );
 }
