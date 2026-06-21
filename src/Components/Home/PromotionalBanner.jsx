@@ -1,9 +1,8 @@
-import React from "react";
 
 export default function PromotionalBanner() {
   return (
     // Main Container
-    <div className="relative w-full bg-[#f4f5f7] overflow-hidden min-h-[400px] flex items-center font-sans select-none my-8">
+    <div className="relative w-full bg-[#f4f5f7] overflow-hidden min-h-100 flex items-center font-sans select-none my-8">
       
       {/* MOBILE RED BACKGROUND: Only shows on smaller screens, creates an angled top */}
       <div 
@@ -22,10 +21,10 @@ export default function PromotionalBanner() {
       />
 
       {/* HALFTONE DOT PATTERN OVERLAY */}
-      <div className="absolute right-0 bottom-0 w-1/3 h-full opacity-10 z-0 bg-[radial-gradient(circle,black_2px,transparent_2px)] bg-[size:10px_10px]" />
+      <div className="absolute right-0 bottom-0 w-1/3 h-full opacity-10 z-0 bg-[radial-gradient(circle,black_2px,transparent_2px)] bg-size-[10px_10px]" />
 
       {/* CONTENT GRID */}
-      <div className="relative z-10 max-w-[1440px] mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 px-6 md:px-16 py-12 md:py-16">
+      <div className="relative z-10 max-w-360 mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 px-6 md:px-16 py-12 md:py-16">
         
         {/* LEFT COLUMN: TEXT CONTENT */}
         <div className="flex flex-col justify-center items-center md:items-start text-center md:text-left z-20">
@@ -44,11 +43,11 @@ export default function PromotionalBanner() {
         </div>
 
         {/* RIGHT COLUMN: IMAGE & GRAPHICS */}
-        <div className="relative flex justify-center items-center h-[300px] md:h-auto z-20">
+        <div className="relative flex justify-center items-center h-75 md:h-auto z-20">
           
           {/* "NEW" OUTLINE TEXT */}
           <div 
-            className="absolute left-[10%] md:-left-[10%] top-1/2 -translate-y-1/2 -rotate-[65deg] text-6xl md:text-8xl font-black tracking-[0.3em] opacity-80 pointer-events-none"
+            className="absolute left-[10%] md:left-[-10%] top-1/2 -translate-y-1/2 rotate-[-65deg] text-6xl md:text-8xl font-black tracking-[0.3em] opacity-80 pointer-events-none"
             style={{
               color: "transparent",
               WebkitTextStroke: "2px #ea4c3b",
@@ -61,7 +60,7 @@ export default function PromotionalBanner() {
           <img
             src="https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png" 
             alt="Running Shoes"
-            className="w-[85%] md:w-full max-w-[500px] object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.3)] -rotate-12 hover:scale-105 transition-transform duration-500 z-10 relative"
+            className="w-[85%] md:w-full max-w-125 object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.3)] -rotate-12 hover:scale-105 transition-transform duration-500 z-10 relative"
           />
         </div>
 
