@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ProductCard from '../../Components/Shared/ProductCard'; // Adjust import path
 
 export default function Men() {
@@ -71,7 +71,7 @@ export default function Men() {
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-10 font-sans text-neutral-800 bg-[#fafafa]">
+    <div className="max-w-360 mx-auto px-4 md:px-8 py-10 font-sans text-neutral-800 bg-[#fafafa]">
       
       {/* MOBILE FILTER TOGGLE BUTTON */}
       <div className="lg:hidden mb-6">
@@ -89,7 +89,7 @@ export default function Men() {
       <div className="flex flex-col lg:flex-row gap-8">
         
         {/* LEFT SIDEBAR: FILTERS */}
-        <aside className={`w-full lg:w-[280px] shrink-0 space-y-6 ${isFilterMenuOpen ? 'block' : 'hidden lg:block'}`}>
+        <aside className={`w-full lg:w-70 shrink-0 space-y-6 ${isFilterMenuOpen ? 'block' : 'hidden lg:block'}`}>
           
           {/* Top Categories */}
           <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
@@ -198,7 +198,7 @@ export default function Men() {
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-neutral-500 whitespace-nowrap">Sort By :</span>
                 <select 
-                  className="select select-bordered select-sm w-full max-w-[150px] bg-transparent font-normal focus:outline-none"
+                  className="select select-bordered select-sm w-full max-w-37.5 bg-transparent font-normal focus:outline-none"
                   value={sortOption}
                   onChange={(e) => {
                     setSortOption(e.target.value);

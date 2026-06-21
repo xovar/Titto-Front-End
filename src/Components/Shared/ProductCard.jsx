@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { FiHeart, FiShoppingCart, FiX, FiChevronDown } from "react-icons/fi";
 
 export default function ProductCard({ product, viewMode = 'grid' }) {
@@ -16,7 +16,7 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
   return (
     <>
       {/* --- PRODUCT CARD VIEW --- */}
-      <div className={`relative border border-neutral-200 rounded-2xl p-4 bg-white hover:shadow-xl transition-shadow duration-300 group cursor-pointer flex ${
+      <div className={`animate-border-red relative border border-neutral-200 rounded-2xl p-4 bg-white hover:shadow-xl transition-shadow duration-300 group cursor-pointer flex ${
         isList ? 'flex-row items-center gap-6 w-full' : 'flex-col h-full'
       }`}>
         
@@ -77,6 +77,24 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
           <h3 className="text-sm font-bold text-neutral-800 mb-2 line-clamp-1">
             {product.title}
           </h3>
+          {/* Card Items Colors */}
+          <div className="bg-white flex gap-4">
+            <h3 className="font-bold mb-4 text-sm">Color: </h3>
+            <div className="flex flex-wrap gap-2">
+              {['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500'].map((color, i) => (
+                <div key={i} className={`w-5 h-5 rounded-full ${color} cursor-pointer border border-neutral-200 hover:scale-110 transition-transform`}></div>
+              ))}
+            </div>
+          </div>
+          {/* item sizes */}
+          <div className="bg-white flex gap-4">
+            <h3 className="font-bold mb-4 text-sm">Color: </h3>
+            <div className="flex flex-wrap gap-2">
+              {['40', '41', '42', '43', '44'].map((size, i) => (
+                <div key={i} className=''>{size}</div>
+              ))}
+            </div>
+          </div>
           <div className="flex items-center gap-2 text-sm">
             {product.originalPrice && (
               <span className="text-neutral-400 line-through">
@@ -93,7 +111,7 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
       {/* --- QUICK VIEW / ADD TO CART MODAL OVERLAY --- */}
       {isModalOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 transition-opacity duration-300 animate-fadeIn"
+          className=" fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 transition-opacity duration-300 animate-fadeIn"
           onClick={() => setIsModalOpen(false)}
         >
           {/* Modal Container */}
@@ -112,11 +130,11 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
             </button>
 
             {/* Left Column: Product Image */}
-            <div className="flex-1 bg-white rounded-2xl flex items-center justify-center p-4 min-h-[260px] md:min-h-[380px]">
+            <div className="flex-1 bg-white rounded-2xl flex items-center justify-center p-4 min-h-65 md:min-h-95">
               <img
                 src={product.image || "https://via.placeholder.com/400x400?text=Product"}
                 alt={product.title}
-                className="w-full h-full max-h-[350px] object-contain"
+                className="w-full h-full max-h-87.5 object-contain"
               />
             </div>
 
