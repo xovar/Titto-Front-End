@@ -7,7 +7,8 @@ import "react-toastify/dist/ReactToastify.css";
 
 // Swiper core components and required modules
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, A11y } from "swiper/modules";
+// 1. Ekhane 'Autoplay' module-ti add kora hoyeche
+import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
 
 // Import core Swiper CSS files
 import "swiper/css";
@@ -89,7 +90,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   return (
     <>
       {/* =========================================================================
-          PRODUCT CARD VIEW (Responsive touch carousel)
+          PRODUCT CARD VIEW (Responsive touch carousel with 4s Autoplay)
           ========================================================================= */}
       <div
         className={`animate-border-red relative border border-neutral-200 rounded-2xl p-4 bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
@@ -135,10 +136,16 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         >
           <Swiper
             key={`${product.id}-${selectedColor}`}
-            modules={[Pagination, A11y]}
+            // 2. Modules e Autoplay add kora hoyeche
+            modules={[Pagination, A11y, Autoplay]}
             spaceBetween={0}
             slidesPerView={1}
             loop={displayImages.length > 1}
+            // 3. 4 seconds loop setup (1 ta image thakle jeno autoplay na hoy se jonno condition deya)
+            autoplay={displayImages.length > 1 ? {
+              delay: 4000,
+              disableOnInteraction: false,
+            } : false}
             pagination={displayImages.length > 1 ? { clickable: true } : false}
             className="w-full h-full"
             style={{
@@ -237,7 +244,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       </div>
 
       {/* =========================================================================
-          QUICK VIEW / ADD TO CART MODAL OVERLAY
+          QUICK VIEW / ADD TO CART MODAL OVERLAY (With Autoplay feature)
           ========================================================================= */}
       {isModalOpen && (
         <div
@@ -261,10 +268,15 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             <div className="flex-1 w-full aspect-square md:h-[420px] bg-neutral-50 border border-neutral-100 rounded-2xl relative overflow-hidden group/slider">
               <Swiper
                 key={`modal-${product.id}-${selectedColor}`}
-                modules={[Navigation, Pagination, A11y]}
+                // Modal slider-eo Autoplay module add kora hoyeche
+                modules={[Navigation, Pagination, A11y, Autoplay]}
                 spaceBetween={0}
                 slidesPerView={1}
                 loop={displayImages.length > 1}
+                autoplay={displayImages.length > 1 ? {
+                  delay: 4000,
+                  disableOnInteraction: false,
+                } : false}
                 pagination={{
                   clickable: true,
                   dynamicBullets: true,
