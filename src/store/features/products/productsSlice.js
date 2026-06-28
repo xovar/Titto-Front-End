@@ -4,6 +4,8 @@ const initialState = {
   items: [],
   loading: false,
   error: null,
+  categories: [],
+  colors: []
 };
 
 const productSlice = createSlice({
@@ -20,9 +22,16 @@ const productSlice = createSlice({
     setError: (state, action) => {
       state.error = action.payload;
       state.loading = false;
+    },
+    setCategories: (state, action) => {
+      state.categories = action.payload;
+      state.loading = false
+    },
+    setColor: (state,action) => {
+      state.colors = action.payload
     }
   },
 });
 
-export const { setProducts, setLoading, setError } = productSlice.actions;
+export const { setProducts, setLoading, setError, setCategories, setColor } = productSlice.actions;
 export default productSlice.reducer;

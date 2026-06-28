@@ -24,15 +24,15 @@ export default function FiltersSidebar({
         <ul className="space-y-3 text-sm">
           {categoriesList.map((cat) => (
             <li 
-              key={cat}
-              onClick={() => handleCategoryChange(cat)}
+              key={cat.id}
+              onClick={() => handleCategoryChange(cat.id)}
               className={`flex justify-between cursor-pointer transition-colors ${
                 selectedCategory === cat 
                   ? 'text-[#ea4c3b] font-bold' 
                   : 'text-neutral-500 hover:text-[#ea4c3b]'
               }`}
             >
-              <span>{cat}</span>
+              <span>{cat.name}</span>
             </li>
           ))}
         </ul>
@@ -42,13 +42,13 @@ export default function FiltersSidebar({
       <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
         <h3 className="font-bold mb-4 text-sm">Price Filter: Up to ${maxPrice}</h3>
         <div className="flex justify-between text-xs text-neutral-500 mb-2">
-          <span>$10</span>
-          <span>$300</span>
+          <span>৳200</span>
+          <span>৳1000</span>
         </div>
         <input 
           type="range" 
-          min={10} 
-          max={300} 
+          min={200} 
+          max={1000} 
           value={maxPrice} 
           onChange={(e) => {
             setMaxPrice(Number(e.target.value));

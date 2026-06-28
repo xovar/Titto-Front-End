@@ -2,17 +2,15 @@ import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import ProductCard from '../../Components/Shared/ProductCard'; 
 
-// সাব-কম্পোনেন্ট ইমপোর্ট
 import FiltersSidebar from '../../Components/Shared/FiltersSidebar';
 import ProductSortBar from '../../Components/Shared/ProductSortBar';
 import Pagination from '../../Components/Shared/Pagination';
 
 export default function Men() {
-  const { items: products } = useSelector((state) => state.products);
-  console.log(products);
+  const { items: products, categories } = useSelector((state) => state.products);
+  console.log(products, categories);
   
-  // আপনার এপিআই ডাটা অনুযায়ী ক্যাটাগরি এবং সাইজ লিস্ট আপডেট করা হয়েছে
-  const categoriesList = ['All', 'Sandal', 'Shoes', 'Sneakers', 'Clothing'];
+  const categoriesList = categories;
   const sizesList = ['All', '40', '41', '42', 'S', 'M', 'L'];
   
   // কালারের নামগুলো যদি হেক্স কোড (#F1EFD34) হয়, তবে এগুলো আপনার ফিল্টার বাটন বা ব্যাকএন্ডের সাথে মিলিয়ে নেবেন
