@@ -1,137 +1,26 @@
 import { useState } from 'react';
-import ProductCard from '../../Components/Shared/ProductCard'; // Adjust import path
+import { useSelector } from 'react-redux';
+import ProductCard from '../../Components/Shared/ProductCard'; 
+
+// সাব-কম্পোনেন্ট ইমপোর্ট
+import FiltersSidebar from '../../Components/Shared/FiltersSidebar';
+import ProductSortBar from '../../Components/Shared/ProductSortBar';
+import Pagination from '../../Components/Shared/Pagination';
 
 export default function Men() {
-  // 1. DUMMY DATA WITH DYNAMIC COLORS, SIZES, AND IMAGES MAPPED
-  const products = [
-    { 
-      id: 1, 
-      title: "Leather Mens Slipper", 
-      category: "Shoes", 
-      sizes: ['M', 'L', 'XL'], 
-      colors: ['Black', 'Gray'],
-      price: 240.00, 
-      originalPrice: 300.00, 
-      discount: 10, 
-      image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-      images: [
-        "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-        "https://via.placeholder.com/400x400?text=Slipper+Side"
-      ]
-    },
-    { 
-      id: 2, 
-      title: "Quickiin Mens shoes", 
-      category: "Shoes", 
-      sizes: ['S', 'M', 'L'], 
-      colors: ['Blue', 'Red'],
-      price: 150.00, 
-      originalPrice: null, 
-      image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-      images: [
-        "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-        "https://via.placeholder.com/400x400?text=Shoes+Side"
-      ]
-    },
-    { 
-      id: 3, 
-      title: "Macbook Pro 14", 
-      category: "Computer", 
-      sizes: [], 
-      colors: ['Gray', 'Black'],
-      price: 290.00, 
-      originalPrice: 300.00, 
-      discount: 10, 
-      image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-      images: ["https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png"]
-    },
-    { 
-      id: 4, 
-      title: "Modern Smart Shoes", 
-      category: "Shoes", 
-      sizes: ['L', 'XL', 'XXL'], 
-      colors: ['Orange', 'Yellow'],
-      price: 180.00, 
-      originalPrice: 300.00, 
-      discount: 10, 
-      image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-      images: ["https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png"]
-    },
-    { 
-      id: 5, 
-      title: "Leather Jacket", 
-      category: "Genuine Leather", 
-      sizes: ['M', 'L'], 
-      colors: ['Black', 'Purple'],
-      price: 90.00, 
-      originalPrice: null, 
-      image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-      images: ["https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png"]
-    },
-    { 
-      id: 6, 
-      title: "Medical Mask Pack", 
-      category: "Covid-19", 
-      sizes: ['S', 'M'], 
-      colors: ['Blue', 'Teal'],
-      price: 210.00, 
-      originalPrice: 300.00, 
-      discount: 10, 
-      image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-      images: ["https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png"]
-    },
-    { 
-      id: 7, 
-      title: "Smart Watch", 
-      category: "Electronics", 
-      sizes: [], 
-      colors: ['Black', 'Pink'],
-      price: 110.00, 
-      originalPrice: null, 
-      discount: 10, 
-      image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-      images: ["https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png"]
-    },
-    { 
-      id: 8, 
-      title: "Aviator Sunglasses", 
-      category: "Frame Sunglasses", 
-      sizes: ['M'], 
-      colors: ['Black', 'Gray'],
-      price: 260.00, 
-      originalPrice: 300.00, 
-      image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-      images: ["https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png"]
-    },
-    { 
-      id: 9, 
-      title: "Hollister V-Neck knit", 
-      category: "Clothing", 
-      sizes: ['S', 'M', 'L', 'XL'], 
-      colors: ['Green', 'Red'],
-      price: 140.00, 
-      originalPrice: 300.00, 
-      discount: 10, 
-      image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png",
-      images: ["https://pngimg.com/uploads/running_shoes/running_shoes_PNG5817.png"]
-    },
-  ];
-
-  const categoriesList = ['All', 'Shoes', 'Computer', 'Covid-19', 'Electronics', 'Frame Sunglasses', 'Furniture', 'Genuine Leather', 'Clothing'];
-  const sizesList = ['All', 'S', 'M', 'L', 'XL', 'XXL'];
+  const { items: products } = useSelector((state) => state.products);
+  console.log(products);
   
-  // COLOR UTILITY LIST (Maps color name to UI styling classes)
+  // আপনার এপিআই ডাটা অনুযায়ী ক্যাটাগরি এবং সাইজ লিস্ট আপডেট করা হয়েছে
+  const categoriesList = ['All', 'Sandal', 'Shoes', 'Sneakers', 'Clothing'];
+  const sizesList = ['All', '40', '41', '42', 'S', 'M', 'L'];
+  
+  // কালারের নামগুলো যদি হেক্স কোড (#F1EFD34) হয়, তবে এগুলো আপনার ফিল্টার বাটন বা ব্যাকএন্ডের সাথে মিলিয়ে নেবেন
   const colorsList = [
     { name: 'All', class: 'bg-gradient-to-tr from-red-500 via-green-500 to-blue-500' },
+    { name: '#F1EFD34', class: 'bg-[#F1EFD3]' }, // আপনার ডাটার কালার কোড অনুযায়ী ব্যাকগ্রাউন্ড কালার
     { name: 'Red', class: 'bg-red-500' },
     { name: 'Blue', class: 'bg-blue-500' },
-    { name: 'Green', class: 'bg-green-500' },
-    { name: 'Yellow', class: 'bg-yellow-500' },
-    { name: 'Purple', class: 'bg-purple-500' },
-    { name: 'Pink', class: 'bg-pink-500' },
-    { name: 'Orange', class: 'bg-orange-500' },
-    { name: 'Teal', class: 'bg-teal-500' },
-    { name: 'Gray', class: 'bg-gray-500' },
     { name: 'Black', class: 'bg-black' },
   ];
 
@@ -139,30 +28,48 @@ export default function Men() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(6);
   const [sortOption, setSortOption] = useState('Default');
-  const [maxPrice, setMaxPrice] = useState(300);
+  
+  // আপনার প্রোডাক্টের দাম যেহেতু ১২০০, তাই সর্বোচ্চ রেঞ্জ ২০০০ বা তার বেশি রাখা হলো
+  const [maxPrice, setMaxPrice] = useState(2000); 
   
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSize, setSelectedSize] = useState('All');
-  const [selectedColor, setSelectedColor] = useState('All'); // NEW STATE FOR COLOR
+  const [selectedColor, setSelectedColor] = useState('All');
 
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); 
 
-  // --- LOGIC: FILTER BY CATEGORY, PRICE, SIZE, AND COLOR ---
+  // --- LOGIC: FILTER (স্ট্রিং প্রাইস এবং কালার অবজেক্ট হ্যান্ডেল করার জন্য সংশোধিত) ---
   let processedProducts = products.filter(product => {
-    const matchesPrice = product.price <= maxPrice;
-    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-    const matchesSize = selectedSize === 'All' || (product.sizes && product.sizes.includes(selectedSize));
-    const matchesColor = selectedColor === 'All' || (product.colors && product.colors.includes(selectedColor)); // NEW FILTER CONDITION
+    
+    // ১. প্রাইস চেক (স্ট্রিং থেকে নাম্বারে কনভার্ট করা হয়েছে)
+    const numericPrice = Number(product.price) || 0;
+    const matchesPrice = numericPrice <= maxPrice;
+    
+    // ২. ক্যাটাগরি অবজেক্ট চেক
+    const matchesCategory = selectedCategory === 'All' || 
+      (product.category && product.category.name === selectedCategory);
+    
+    // ৩. ভেরিয়েন্টস -> সাইজেস -> সাইজ টেক্সট চেক
+    const matchesSize = selectedSize === 'All' || 
+      (product.variants && product.variants.some(variant => 
+        variant.sizes && variant.sizes.some(s => s.size === selectedSize)
+      ));
+    
+    // ৪. ভেরিয়েন্টস -> কালার অবজেক্টের name চেক
+    const matchesColor = selectedColor === 'All' || 
+      (product.variants && product.variants.some(variant => 
+        variant.color && variant.color.name === selectedColor
+      ));
     
     return matchesPrice && matchesCategory && matchesSize && matchesColor;
   });
 
-  // Sort Logic
+  // Sort Logic (নাম্বার কনভার্ট করে সর্টিং করা হচ্ছে)
   if (sortOption === 'Price: Low to High') {
-    processedProducts.sort((a, b) => a.price - b.price);
+    processedProducts.sort((a, b) => Number(a.price) - Number(b.price));
   } else if (sortOption === 'Price: High to Low') {
-    processedProducts.sort((a, b) => b.price - a.price);
+    processedProducts.sort((a, b) => Number(b.price) - Number(a.price));
   }
 
   // Pagination Logic
@@ -191,7 +98,7 @@ export default function Men() {
 
   const handleColorChange = (colorName) => {
     setSelectedColor(colorName);
-    setCurrentPage(1); // Safely resets pagination to first page
+    setCurrentPage(1);
   };
 
   return (
@@ -212,139 +119,35 @@ export default function Men() {
 
       <div className="flex flex-col lg:flex-row gap-8">
         
-        {/* LEFT SIDEBAR: FILTERS */}
-        <aside className={`w-full lg:w-70 shrink-0 space-y-6 ${isFilterMenuOpen ? 'block' : 'hidden lg:block'}`}>
-          
-          {/* Top Categories */}
-          <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-            <h3 className="font-bold mb-4 text-sm">Top Categories</h3>
-            <ul className="space-y-3 text-sm">
-              {categoriesList.map((cat) => (
-                <li 
-                  key={cat}
-                  onClick={() => handleCategoryChange(cat)}
-                  className={`flex justify-between cursor-pointer transition-colors ${
-                    selectedCategory === cat 
-                      ? 'text-[#ea4c3b] font-bold' 
-                      : 'text-neutral-500 hover:text-[#ea4c3b]'
-                  }`}
-                >
-                  <span>{cat}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* SIDEBAR FILTERS COMPONENT */}
+        <FiltersSidebar 
+          isFilterMenuOpen={isFilterMenuOpen}
+          categoriesList={categoriesList}
+          selectedCategory={selectedCategory}
+          handleCategoryChange={handleCategoryChange}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
+          setCurrentPage={setCurrentPage}
+          colorsList={colorsList}
+          selectedColor={selectedColor}
+          handleColorChange={handleColorChange}
+          sizesList={sizesList}
+          selectedSize={selectedSize}
+          handleSizeChange={handleSizeChange}
+        />
 
-          {/* Price Filter */}
-          <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-            <h3 className="font-bold mb-4 text-sm">Price Filter: Up to ${maxPrice}</h3>
-            <div className="flex justify-between text-xs text-neutral-500 mb-2">
-              <span>$10</span>
-              <span>$300</span>
-            </div>
-            <input 
-              type="range" 
-              min={10} 
-              max={300} 
-              value={maxPrice} 
-              onChange={(e) => {
-                setMaxPrice(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="range range-xs range-error w-full" 
-            />
-          </div>
-
-          {/* DYNAMIC COLOR FILTER WITH SELECTED HIGHLIGHT */}
-          <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-            <h3 className="font-bold mb-4 text-sm">Color</h3>
-            <div className="flex flex-wrap gap-2">
-              {colorsList.map((color) => (
-                <button 
-                  key={color.name} 
-                  title={color.name}
-                  onClick={() => handleColorChange(color.name)}
-                  className={`w-6 h-6 rounded-full ${color.class} cursor-pointer border border-neutral-200 transition-all ${
-                    selectedColor === color.name 
-                      ? 'ring-2 ring-offset-2 ring-[#ea4c3b] scale-110' 
-                      : 'hover:scale-110'
-                  }`}
-                ></button>
-              ))}
-            </div>
-          </div>
-
-          {/* Size Filter */}
-          <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-            <h3 className="font-bold mb-4 text-sm">Size</h3>
-            <ul className="space-y-3 text-sm">
-              {sizesList.map((size) => (
-                <li 
-                  key={size}
-                  onClick={() => handleSizeChange(size)}
-                  className={`flex justify-between cursor-pointer transition-colors ${
-                    selectedSize === size 
-                      ? 'text-[#ea4c3b] font-bold' 
-                      : 'text-neutral-500 hover:text-[#ea4c3b]'
-                  }`}
-                >
-                  <span>{size}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-        </aside>
-
-        {/* RIGHT MAIN CONTENT: PRODUCTS */}
+        {/* RIGHT MAIN CONTENT */}
         <main className="flex-1">
           
-          {/* Top Control Bar */}
-          <div className="flex flex-col sm:flex-row justify-between items-center bg-white border border-neutral-200 rounded-xl p-3 mb-6 gap-4 shadow-sm">
-            <span className="text-sm text-neutral-500">
-              <span className="text-[#ea4c3b] font-bold">{totalItems}</span> Product{totalItems !== 1 && 's'} Found
-            </span>
-            
-            <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-              
-              {/* VIEW TOGGLES */}
-              <div className="flex gap-2 text-neutral-400">
-                <button 
-                  onClick={() => setViewMode('grid')}
-                  className={`transition-colors ${viewMode === 'grid' ? 'text-[#ea4c3b]' : 'hover:text-neutral-600'}`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                </button>
-                <button 
-                  onClick={() => setViewMode('list')}
-                  className={`transition-colors ${viewMode === 'list' ? 'text-[#ea4c3b]' : 'hover:text-neutral-600'}`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-              
-              {/* Sort Dropdown */}
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-neutral-500 whitespace-nowrap">Sort By :</span>
-                <select 
-                  className="select select-bordered select-sm w-full max-w-37.5 bg-transparent font-normal focus:outline-none"
-                  value={sortOption}
-                  onChange={(e) => {
-                    setSortOption(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option>Default</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                </select>
-              </div>
-            </div>
-          </div>
+          {/* PRODUCT SORT BAR COMPONENT */}
+          <ProductSortBar 
+            totalItems={totalItems}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            setCurrentPage={setCurrentPage}
+          />
 
           {/* DYNAMIC PRODUCT CONTAINER */}
           <div className={`mb-10 w-full ${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-6'}`}>
@@ -359,29 +162,14 @@ export default function Men() {
             )}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center">
-              <div className="join shadow-sm rounded-lg overflow-hidden">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button 
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`join-item btn btn-sm bg-white border transition-colors ${
-                      safeCurrentPage === page 
-                        ? 'border-[#ea4c3b] text-[#ea4c3b] hover:bg-[#ea4c3b] hover:text-white' 
-                        : 'border-neutral-200 text-neutral-500 hover:bg-neutral-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* PAGINATION COMPONENT */}
+          <Pagination 
+            totalPages={totalPages}
+            safeCurrentPage={safeCurrentPage}
+            handlePageChange={handlePageChange}
+          />
 
         </main>
-
       </div>
     </div>
   );

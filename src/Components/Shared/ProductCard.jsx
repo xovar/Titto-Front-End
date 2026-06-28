@@ -7,7 +7,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 // Swiper core components and required modules
 import { Swiper, SwiperSlide } from "swiper/react";
-// 1. Ekhane 'Autoplay' module-ti add kora hoyeche
 import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
 
 // Import core Swiper CSS files
@@ -35,9 +34,17 @@ const FALLBACK_COLORS = ["Black", "Red", "Blue", "White"];
 export default function ProductCard({ product, viewMode = "grid" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  
-  const availableSizes = product.sizes && product.sizes.length > 0 ? product.sizes : FALLBACK_SIZES;
-  const availableColors = product.colors && product.colors.length > 0 ? product.colors : FALLBACK_COLORS;
+
+  const extractedSizes = product.variants
+    ? product.variants.flatMap(v => v.sizes ? v.sizes.map(s => s.size) : [])
+    : [];
+  const availableSizes = extractedSizes.length > 0 ? [...new Set(extractedSizes)] : FALLBACK_SIZES;
+
+  // ২. variants থেকে কালারের name অবজেক্ট বের করা হচ্ছে
+  const extractedColors = product.variants
+    ? product.variants.map(v => v.color && v.color.name).filter(Boolean)
+    : [];
+  const availableColors = extractedColors.length > 0 ? [...new Set(extractedColors)] : FALLBACK_COLORS;
 
   const [selectedSize, setSelectedSize] = useState(availableSizes[0]);
   const [selectedColor, setSelectedColor] = useState(availableColors[0]);
@@ -47,29 +54,35 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   const incrementQty = () => setQuantity((prev) => prev + 1);
   const decrementQty = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
-  const activeColorKey = selectedColor?.toLowerCase();
-  const displayImages = 
-    product.colorImages?.[activeColorKey] || 
-    product.images || 
-    [product.image || "https://via.placeholder.com/400x400?text=Product"];
+  const activeVariant = product.variants?.find(v => v.color && v.color.name === selectedColor) || product.variants?.[0];
+  const displayImages = activeVariant?.images || product.images || ["https://via.placeholder.com/400x400?text=Product"];
 
-  // Reusable add to cart handler with Toast notification trigger
+  const numericPrice = Number(product.price) || 0;
+  
+  const discountPercent = Number(product.discount) || 0;
+  const numericOriginalPrice = product.originalPrice 
+    ? Number(product.originalPrice) 
+    : discountPercent > 0 
+      ? numericPrice / (1 - discountPercent / 100) 
+      : 0;
+
+  // কার্ট হ্যান্ডলার
   const handleAddToCart = () => {
     console.log("Added to cart payload submission:", {
       ...product,
       quantity,
       size: selectedSize,
       color: selectedColor,
+      finalPrice: numericPrice
     });
 
-    // Custom stylized cinematic toast notification
     toast.success(
       <div className="flex flex-col gap-0.5 text-left">
         <span className="font-extrabold text-neutral-900 tracking-tight text-sm">
           Excellent choice! ⚡
         </span>
         <span className="text-xs text-neutral-500 leading-normal">
-          {quantity}x <strong className="text-neutral-800 font-semibold">{product.title}</strong> ({selectedColor} / {selectedSize}) safely secured in your bag.
+          {quantity}x <strong className="text-neutral-800 font-semibold">{product.name}</strong> ({selectedColor} / {selectedSize}) safely secured in your bag.
         </span>
       </div>,
       {
@@ -89,9 +102,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
   return (
     <>
-      {/* =========================================================================
-          PRODUCT CARD VIEW (Responsive touch carousel with 4s Autoplay)
-          ========================================================================= */}
+      {/* PRODUCT CARD VIEW */}
       <div
         className={`animate-border-red relative border border-neutral-200 rounded-2xl p-4 bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
           isList ? "flex-row items-center gap-6 w-full" : "flex-col h-full"
@@ -109,9 +120,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             type="button"
             className="w-8 h-8 cursor-pointer bg-white border border-neutral-200 rounded shadow-sm flex items-center justify-center text-neutral-600 hover:text-[#ea4c3b] hover:border-[#ea4c3b] hover:bg-red-50 transition-colors"
             aria-label="Add to favorites"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
+            onClick={(e) => { e.stopPropagation(); }}
           >
             <FiHeart className="w-4 h-4" />
           </button>
@@ -136,16 +145,11 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         >
           <Swiper
             key={`${product.id}-${selectedColor}`}
-            // 2. Modules e Autoplay add kora hoyeche
             modules={[Pagination, A11y, Autoplay]}
             spaceBetween={0}
             slidesPerView={1}
             loop={displayImages.length > 1}
-            // 3. 4 seconds loop setup (1 ta image thakle jeno autoplay na hoy se jonno condition deya)
-            autoplay={displayImages.length > 1 ? {
-              delay: 4000,
-              disableOnInteraction: false,
-            } : false}
+            autoplay={displayImages.length > 1 ? { delay: 4000, disableOnInteraction: false } : false}
             pagination={displayImages.length > 1 ? { clickable: true } : false}
             className="w-full h-full"
             style={{
@@ -157,7 +161,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
               <SwiperSlide key={`card-${imgUrl}-${idx}`} className="w-full h-full flex items-center justify-center bg-white p-4">
                 <img
                   src={imgUrl}
-                  alt={product.title}
+                  alt={product.name}
                   className="w-full h-full object-contain group-hover/card:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
@@ -166,13 +170,13 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           </Swiper>
         </div>
 
-        {/* Technical Product Metadata Container */}
+        {/* Product Metadata */}
         <div className={`flex flex-col items-start text-left w-full ${isList ? "flex-1" : "mt-auto"}`}>
           <span className="text-[11px] text-neutral-400 uppercase tracking-wider mb-1">
-            {product.category}
+            {product.category && product.category.name}
           </span>
           <h3 className="text-sm font-bold text-neutral-800 mb-2 line-clamp-1">
-            {product.title}
+            {product.name}
           </h3>
 
           {/* DYNAMIC CARD-FACE COLOR SELECTOR */}
@@ -231,21 +235,19 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           </div>
 
           <div className="flex items-center gap-2 text-sm mt-auto">
-            {product.originalPrice && (
+            {numericOriginalPrice > 0 && (
               <span className="text-neutral-400 line-through">
-                ${product.originalPrice.toFixed(2)}
+                ${numericOriginalPrice.toFixed(2)}
               </span>
             )}
             <span className="text-[#ea4c3b] font-bold">
-              ${product.price.toFixed(2)}
+              ${numericPrice.toFixed(2)}
             </span>
           </div>
         </div>
       </div>
 
-      {/* =========================================================================
-          QUICK VIEW / ADD TO CART MODAL OVERLAY (With Autoplay feature)
-          ========================================================================= */}
+      {/* QUICK VIEW / ADD TO CART MODAL OVERLAY */}
       {isModalOpen && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 transition-opacity duration-300 animate-fadeIn"
@@ -264,27 +266,17 @@ export default function ProductCard({ product, viewMode = "grid" }) {
               <FiX className="w-4 h-4 stroke-[2.5]" />
             </button>
 
-            {/* Left Column: Product Spotlight Slider Dynamic Swiper Layout */}
+            {/* Left Column: Image Slider */}
             <div className="flex-1 w-full aspect-square md:h-[420px] bg-neutral-50 border border-neutral-100 rounded-2xl relative overflow-hidden group/slider">
               <Swiper
                 key={`modal-${product.id}-${selectedColor}`}
-                // Modal slider-eo Autoplay module add kora hoyeche
                 modules={[Navigation, Pagination, A11y, Autoplay]}
                 spaceBetween={0}
                 slidesPerView={1}
                 loop={displayImages.length > 1}
-                autoplay={displayImages.length > 1 ? {
-                  delay: 4000,
-                  disableOnInteraction: false,
-                } : false}
-                pagination={{
-                  clickable: true,
-                  dynamicBullets: true,
-                }}
-                navigation={{
-                  nextEl: ".modal-swiper-next",
-                  prevEl: ".modal-swiper-prev",
-                }}
+                autoplay={displayImages.length > 1 ? { delay: 4000, disableOnInteraction: false } : false}
+                pagination={{ clickable: true, dynamicBullets: true }}
+                navigation={{ nextEl: ".modal-swiper-next", prevEl: ".modal-swiper-prev" }}
                 className="w-full h-full rounded-2xl"
                 style={{
                   "--swiper-pagination-color": "#2c2c2e",
@@ -297,14 +289,13 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                   <SwiperSlide key={`modal-${imgUrl}-${idx}`} className="bg-white flex items-center justify-center p-8 select-none w-full h-full">
                     <img
                       src={imgUrl}
-                      alt={`${product.title} view ${idx + 1}`}
+                      alt={`${product.name} view ${idx + 1}`}
                       className="w-full h-full max-h-[340px] object-contain"
                     />
                   </SwiperSlide>
                 ))}
               </Swiper>
 
-              {/* Functional Directional Navigators */}
               {displayImages.length > 1 && (
                 <>
                   <button
@@ -325,27 +316,25 @@ export default function ProductCard({ product, viewMode = "grid" }) {
               )}
             </div>
 
-            {/* Right Column: Information & Selection Panels */}
+            {/* Right Column: Information Panel */}
             <div className="flex-1 flex flex-col justify-center text-left">
               <h2 className="text-2xl md:text-3xl font-extrabold text-neutral-900 mb-2 tracking-tight">
-                {product.title}
+                {product.name}
               </h2>
 
               <div className="flex items-center gap-3 text-lg md:text-xl font-bold mb-4">
-                {product.originalPrice && (
+                {numericOriginalPrice > 0 && (
                   <span className="text-neutral-400 line-through font-normal">
-                    ${product.originalPrice.toFixed(2)}
+                    ${numericOriginalPrice.toFixed(2)}
                   </span>
                 )}
                 <span className="text-[#ea4c3b]">
-                  ${product.price.toFixed(2)}
+                  ${numericPrice.toFixed(2)}
                 </span>
               </div>
 
               <p className="text-neutral-500 text-xs md:text-sm leading-relaxed mb-6 font-normal max-w-md">
-                Contrary to popular belief, Lorem Ipsum is not simply random
-                text. It has roots in a piece of classical Latin literature from
-                45 BC, making it over 2000 years old.
+                {product.description || "Classic and comfortable premium product built for daily lifestyle and active sports durability."}
               </p>
 
               <div className="space-y-4 mb-6">
@@ -354,7 +343,6 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                   <label className="block text-[11px] font-extrabold text-neutral-700 uppercase tracking-wider mb-2">
                     Size: <span className="text-neutral-400 font-normal ml-1">{selectedSize}</span>
                   </label>
-
                   <div className="flex flex-wrap gap-2">
                     {availableSizes.map((size) => {
                       const isSelected = selectedSize === size;
@@ -379,18 +367,13 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                 {/* MODAL COLOR SELECTOR */}
                 <div>
                   <label className="block text-[11px] font-extrabold text-neutral-700 uppercase tracking-wider mb-2">
-                    Color:
-                    <span className="text-neutral-400 font-normal capitalize ml-1">
-                      {selectedColor}
-                    </span>
+                    Color: <span className="text-neutral-400 font-normal capitalize ml-1">{selectedColor}</span>
                   </label>
-
                   <div className="flex flex-wrap gap-3 py-1">
                     {availableColors.map((colorName) => {
                       const normalized = colorName.toLowerCase();
                       const bgClass = COLOR_MAP[normalized] || "bg-neutral-300";
                       const isSelected = selectedColor === colorName;
-
                       return (
                         <button
                           key={colorName}
