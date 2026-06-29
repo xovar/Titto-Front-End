@@ -42,13 +42,13 @@ export default function FiltersSidebar({
       <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
         <h3 className="font-bold mb-4 text-sm">Price Filter: Up to ${maxPrice}</h3>
         <div className="flex justify-between text-xs text-neutral-500 mb-2">
-          <span>৳200</span>
-          <span>৳1000</span>
+          <span>৳100</span>
+          <span>৳12000</span>
         </div>
         <input 
           type="range" 
-          min={200} 
-          max={1000} 
+          min={100} 
+          max={12000} 
           value={maxPrice} 
           onChange={(e) => {
             setMaxPrice(Number(e.target.value));

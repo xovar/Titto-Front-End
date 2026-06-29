@@ -20,7 +20,7 @@ export default function Men() {
   const [sortOption, setSortOption] = useState('Default');
   
   // আপনার প্রোডাক্টের দাম যেহেতু ১২০০, তাই সর্বোচ্চ রেঞ্জ ২০০০ বা তার বেশি রাখা হলো
-  const [maxPrice, setMaxPrice] = useState(2000); 
+  const [maxPrice, setMaxPrice] = useState(12000); 
   
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSize, setSelectedSize] = useState('All');
