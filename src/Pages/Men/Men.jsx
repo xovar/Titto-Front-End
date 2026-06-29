@@ -7,20 +7,12 @@ import ProductSortBar from '../../Components/Shared/ProductSortBar';
 import Pagination from '../../Components/Shared/Pagination';
 
 export default function Men() {
-  const { items: products, categories } = useSelector((state) => state.products);
-  console.log(products, categories);
-  
+  const { items: products, categories, colors } = useSelector((state) => state.products);
+  console.log(products, categories, colors);
   const categoriesList = categories;
-  const sizesList = ['All', '40', '41', '42', 'S', 'M', 'L'];
+  const sizesList = ['All', '39', '40', '41', '42', '43', '44', '45'];
   
-  // কালারের নামগুলো যদি হেক্স কোড (#F1EFD34) হয়, তবে এগুলো আপনার ফিল্টার বাটন বা ব্যাকএন্ডের সাথে মিলিয়ে নেবেন
-  const colorsList = [
-    { name: 'All', class: 'bg-gradient-to-tr from-red-500 via-green-500 to-blue-500' },
-    { name: '#F1EFD34', class: 'bg-[#F1EFD3]' }, // আপনার ডাটার কালার কোড অনুযায়ী ব্যাকগ্রাউন্ড কালার
-    { name: 'Red', class: 'bg-red-500' },
-    { name: 'Blue', class: 'bg-blue-500' },
-    { name: 'Black', class: 'bg-black' },
-  ];
+  const colorsList = colors;
 
   // --- STATE MANAGEMENT ---
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,6 +84,7 @@ export default function Men() {
   const handleSizeChange = (size) => {
     setSelectedSize(size);
     setCurrentPage(1); 
+    console.log(size);
   };
 
   const handleColorChange = (colorName) => {

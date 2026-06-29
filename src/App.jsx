@@ -1,6 +1,6 @@
 import { RouterProvider } from 'react-router-dom';
 import { router } from './routes/AppRoutes';
-import { setProducts, setLoading, setError, setCategories } from './store/features/products/productsSlice';
+import { setProducts, setLoading, setError, setCategories, setColor } from './store/features/products/productsSlice';
 // 1. Import the Toastify components and styles here
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -32,6 +32,18 @@ export default function App() {
         const data = await products.fetchCategories();
       
         dispatch(setCategories(data));
+      } catch (err) {
+        dispatch(setError(err.message || 'Something went wrong'));
+        console.error("Error fetching products:", err);
+      }
+
+      try {
+        dispatch(setLoading(true));
+        
+       
+        const data = await products.fetchColors();
+      
+        dispatch(setColor(data));
       } catch (err) {
         dispatch(setError(err.message || 'Something went wrong'));
         console.error("Error fetching products:", err);

@@ -62,12 +62,22 @@ export default function FiltersSidebar({
       <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
         <h3 className="font-bold mb-4 text-sm">Color</h3>
         <div className="flex flex-wrap gap-2">
+          <button
+          title="All"
+          onClick={() => handleColorChange("All")}
+              className={`w-6 h-6 rounded-full bg-linear-to-tr from-red-500 via-green-500 to-blue-500 cursor-pointer border border-neutral-200 transition-all ${
+                selectedColor === "All" 
+                  ? 'ring-2 ring-offset-2 ring-[#ea4c3b] scale-110' 
+                  : 'hover:scale-110'
+              }`}
+          ></button>
           {colorsList.map((color) => (
             <button 
-              key={color.name} 
+              key={color.id} 
               title={color.name}
               onClick={() => handleColorChange(color.name)}
-              className={`w-6 h-6 rounded-full ${color.class} cursor-pointer border border-neutral-200 transition-all ${
+              style={{ backgroundColor: color.code }}
+              className={`w-6 h-6 rounded-full cursor-pointer border border-neutral-200 transition-all ${
                 selectedColor === color.name 
                   ? 'ring-2 ring-offset-2 ring-[#ea4c3b] scale-110' 
                   : 'hover:scale-110'

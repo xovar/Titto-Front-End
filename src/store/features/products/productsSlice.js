@@ -1,15 +1,15 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   items: [],
   loading: false,
   error: null,
   categories: [],
-  colors: []
+  colors: [],
 };
 
 const productSlice = createSlice({
-  name: 'products',
+  name: "products",
   initialState,
   reducers: {
     setProducts: (state, action) => {
@@ -25,13 +25,15 @@ const productSlice = createSlice({
     },
     setCategories: (state, action) => {
       state.categories = action.payload;
-      state.loading = false
+      state.loading = false;
     },
-    setColor: (state,action) => {
-      state.colors = action.payload
-    }
+    setColor: (state, action) => {
+      state.colors = action.payload;
+      state.loading = false;
+    },
   },
 });
 
-export const { setProducts, setLoading, setError, setCategories, setColor } = productSlice.actions;
+export const { setProducts, setLoading, setError, setCategories, setColor } =
+  productSlice.actions;
 export default productSlice.reducer;
