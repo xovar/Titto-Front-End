@@ -19,7 +19,6 @@ export default function Men() {
   const [itemsPerPage] = useState(6);
   const [sortOption, setSortOption] = useState('Default');
   
-  // আপনার প্রোডাক্টের দাম যেহেতু ১২০০, তাই সর্বোচ্চ রেঞ্জ ২০০০ বা তার বেশি রাখা হলো
   const [maxPrice, setMaxPrice] = useState(12000); 
   
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -38,7 +37,7 @@ export default function Men() {
     
     // ২. ক্যাটাগরি অবজেক্ট চেক
     const matchesCategory = selectedCategory === 'All' || 
-      (product.category && product.category.name === selectedCategory);
+      (product.category && product.category.id === selectedCategory);
     
     // ৩. ভেরিয়েন্টস -> সাইজেস -> সাইজ টেক্সট চেক
     const matchesSize = selectedSize === 'All' || 
@@ -79,6 +78,7 @@ export default function Men() {
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
     setCurrentPage(1); 
+    console.log(selectedCategory);
   };
 
   const handleSizeChange = (size) => {

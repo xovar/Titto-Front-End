@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react"; // 👈 useEffect ফেলে দিয়ে শুধু useMemo রাখা হয়েছে
 import { FiHeart, FiShoppingCart } from "react-icons/fi";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,50 +11,57 @@ import "swiper/css/pagination";
 
 import ProductModal from "./ProductModal";
 
-const COLOR_MAP = {
-  black: "bg-black",
-  red: "bg-red-500",
-  blue: "bg-blue-500",
-  green: "bg-green-500",
-  yellow: "bg-yellow-500",
-  white: "bg-white border border-neutral-300",
-  gray: "bg-gray-500",
-  purple: "bg-purple-500",
-  pink: "bg-pink-500",
-  orange: "bg-orange-500",
-  teal: "bg-teal-500",
-};
-
 const FALLBACK_SIZES = ["S", "M", "L", "XL"];
-const FALLBACK_COLORS = ["Black", "Red", "Blue", "White"];
+const FALLBACK_COLORS = [{ name: "Default", code: "#d4d4d4" }];
 
 export default function ProductCard({ product, viewMode = "grid" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const extractedSizes = product.variants
-    ? product.variants.flatMap((v) =>
-        v.sizes ? v.sizes.map((s) => s.size) : [],
-      )
-    : [];
-  const availableSizes =
-    extractedSizes.length > 0 ? [...new Set(extractedSizes)] : FALLBACK_SIZES;
-
-  const extractedColors = product.variants
-    ? product.variants.map((v) => v.color && v.color.name).filter(Boolean)
-    : [];
-  const availableColors =
-    extractedColors.length > 0
-      ? [...new Set(extractedColors)]
+  // ১. কালার এক্সট্র্যাকশন
+  const availableColors = useMemo(() => {
+    return product.variants && product.variants.length > 0
+      ? product.variants
+          .map((v) => v.color)
+          .filter((c) => c && c.name && c.code)
+          .filter((value, index, self) => 
+            self.findIndex((t) => t.name === value.name) === index
+          )
       : FALLBACK_COLORS;
+  }, [product.variants]);
 
+  const [selectedColor, setSelectedColor] = useState(availableColors[0]?.name);
+
+  // ২. সিলেক্টেড কালারের ওপর বেইজ করে একটিভ ভ্যারিয়েন্ট খুঁজে বের করা
+  const activeVariant = useMemo(() => {
+    return product.variants?.find((v) => v.color && v.color.name === selectedColor) ||
+      product.variants?.[0];
+  }, [product.variants, selectedColor]);
+
+  // ৩. ডাইনামিক সাইজ এক্সট্র্যাকশন (useMemo ব্যবহার করা হয়েছে)
+  const availableSizes = useMemo(() => {
+    const extractedSizes = activeVariant && activeVariant.sizes
+      ? activeVariant.sizes.map((s) => s.size)
+      : [];
+    
+    return extractedSizes.length > 0 ? [...new Set(extractedSizes)] : FALLBACK_SIZES;
+  }, [activeVariant]); 
+
+  // ৪. সিলেক্টেড সাইজ স্টেট (এটি ব্যাকআপ হিসেবে ক্লিক করা সাইজ মনে রাখবে)
   const [selectedSize, setSelectedSize] = useState(availableSizes[0]);
-  const [selectedColor, setSelectedColor] = useState(availableColors[0]);
+
+  // ⚡ ৫. ইফেক্ট ছাড়া স্টেট সিনক্রোনাইজেশন (Derived State Pattern)
+  // যদি বর্তমানে সিলেক্টেড সাইজটি এই নতুন কালারের সাইজ লিস্টে না থাকে, তবে প্রথম সাইজটি দেখাবে
+  const currentSizeToShow = useMemo(() => {
+    return availableSizes.includes(selectedSize) ? selectedSize : availableSizes[0];
+  }, [selectedSize, availableSizes]);
+
+  // সাইজ বাটনে ক্লিক হ্যান্ডলার
+  const handleSizeClick = (sizeValue) => {
+    setSelectedSize(sizeValue);
+  };
 
   const isList = viewMode === "list";
-
-  const activeVariant =
-    product.variants?.find((v) => v.color && v.color.name === selectedColor) ||
-    product.variants?.[0];
+  
   const displayImages = activeVariant?.images ||
     product.images || ["https://via.placeholder.com/400x400?text=Product"];
 
@@ -66,7 +73,6 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       ? numericPrice / (1 - discountPercent / 100)
       : 0;
 
-  // কার্ট সাবমিশন হ্যান্ডলার
   const handleAddToCartSubmit = (modalData) => {
     console.log("Added to cart payload submission:", {
       ...product,
@@ -96,7 +102,6 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        progress: undefined,
         theme: "light",
       },
     );
@@ -106,9 +111,8 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
   return (
     <>
-      {/* PRODUCT CARD VIEW */}
       <div
-        className={`animate-border-red relative border border-neutral-200 rounded-2xl p-2 bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
+        className={`animate-border-red relative border border-neutral-200 rounded-2xl p-4 bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
           isList ? "flex-row items-center gap-6 w-full" : "flex-col h-full"
         }`}
       >
@@ -118,15 +122,13 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           </div>
         )}
 
-        {/* Hover Action Buttons Layer */}
+        {/* Hover Action Buttons */}
         <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-100 md:opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-20">
           <button
             type="button"
             className="w-8 h-8 cursor-pointer bg-white border border-neutral-200 rounded shadow-sm flex items-center justify-center text-neutral-600 hover:text-[#ea4c3b] hover:border-[#ea4c3b] hover:bg-red-50 transition-colors"
             aria-label="Add to favorites"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
+            onClick={(e) => e.stopPropagation()}
           >
             <FiHeart className="w-4 h-4" />
           </button>
@@ -144,10 +146,10 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           </button>
         </div>
 
-        {/* 🛠️ ফিক্সড কার্ড ইমেজ কন্টেইনার (কোনো প্যাডিং এবং ফাঁকা অংশ ছাড়া) */}
+        {/* Image Container */}
         <div
           className={`${
-            isList ? "w-[100] h-[100] shrink-0" : "w-[800] aspect-square mb-4"
+            isList ? "w-44 h-44 shrink-0" : "w-full aspect-square mb-4"
           } relative overflow-hidden rounded-xl bg-neutral-50 border border-neutral-100`}
           onClick={() => setIsModalOpen(true)}
         >
@@ -174,7 +176,6 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                 key={`card-${imgUrl}-${idx}`}
                 className="w-full h-full flex items-center justify-center bg-white select-none"
               >
-                {/* 💡 object-cover পুরো উইন্ডো জুড়ে ইমেজকে বর্ডার-টু-বর্ডার ফিট করে দিবে */}
                 <img
                   src={imgUrl}
                   alt={product.name}
@@ -187,9 +188,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         </div>
 
         {/* Product Metadata */}
-        <div
-          className={`flex flex-col items-start text-left w-full ${isList ? "flex-1" : "mt-auto"}`}
-        >
+        <div className={`flex flex-col items-start text-left w-full ${isList ? "flex-1" : "mt-auto"}`}>
           <span className="text-[11px] text-neutral-400 uppercase tracking-wider mb-1">
             {product.category && product.category.name}
           </span>
@@ -197,26 +196,25 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             {product.name}
           </h3>
 
-          {/* CARD-FACE COLOR SELECTOR */}
+          {/* COLOR SELECTOR */}
           <div className="bg-white flex items-center gap-2 mb-2 w-full">
             <span className="text-xs font-bold text-neutral-500 min-w-[45px]">
               Color:
             </span>
             <div className="flex flex-wrap gap-1.5">
-              {availableColors.map((colorName) => {
-                const normalized = colorName.toLowerCase();
-                const bgClass = COLOR_MAP[normalized] || "bg-neutral-300";
-                const isSelected = selectedColor === colorName;
+              {availableColors.map((colorObj) => {
+                const isSelected = selectedColor === colorObj.name;
                 return (
                   <button
-                    key={colorName}
+                    key={colorObj.id || colorObj.name}
                     type="button"
-                    title={colorName}
+                    title={colorObj.name}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedColor(colorName);
+                      setSelectedColor(colorObj.name);
                     }}
-                    className={`w-4 h-4 rounded-full ${bgClass} cursor-pointer transition-all duration-200 ${
+                    style={{ backgroundColor: colorObj.code }}
+                    className={`w-5 h-5 rounded-full cursor-pointer transition-all duration-200 ${
                       isSelected
                         ? "ring-2 ring-offset-1 ring-[#ea4c3b] scale-110 z-10"
                         : "border border-neutral-200 hover:scale-110"
@@ -227,21 +225,22 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             </div>
           </div>
 
-          {/* CARD-FACE SIZE SELECTOR */}
+          {/* SIZES SELECTOR */}
           <div className="bg-white flex items-center gap-2 mb-3 w-full">
             <span className="text-xs font-bold text-neutral-500 min-w-[45px]">
               Sizes:
             </span>
             <div className="flex flex-wrap gap-1">
               {availableSizes.map((sizeValue) => {
-                const isSelected = selectedSize === sizeValue;
+                // 👈 এখানে ডাইনামিক `currentSizeToShow` চেক করা হচ্ছে
+                const isSelected = currentSizeToShow === sizeValue; 
                 return (
                   <button
                     key={sizeValue}
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedSize(sizeValue);
+                      handleSizeClick(sizeValue);
                     }}
                     className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${
                       isSelected
@@ -269,16 +268,15 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         </div>
       </div>
 
-      {/* DETACHED MODAL COMPONENT (with clean key handling) */}
+      {/* DETACHED MODAL COMPONENT */}
       {isModalOpen && (
         <ProductModal
           key={product.id}
           product={product}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          availableColors={availableColors}
+          availableColors={availableColors.map(c => c.name)}
           availableSizes={availableSizes}
-          colorMap={COLOR_MAP}
           onAddToCart={handleAddToCartSubmit}
         />
       )}
