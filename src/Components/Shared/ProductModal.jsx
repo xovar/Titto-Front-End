@@ -131,7 +131,7 @@ export default function ProductModal({
 
         {/* Left Column: Image Slider & Thumbnails Grid */}
         <div className="flex-1 w-full flex flex-col gap-4 relative">
-          <div className="w-full aspect-square md:h-[400px] bg-white border border-neutral-100 rounded-2xl relative overflow-hidden group/slider flex items-center justify-center">
+          <div className="w-full aspect-square md:h-100 bg-white border border-neutral-100 rounded-2xl relative overflow-hidden group/slider flex items-center justify-center">
             <Swiper
               onSwiper={setSwiperRef}
               key={`modal-${product.id}-${selectedColor}`}
@@ -152,7 +152,7 @@ export default function ProductModal({
                     <img
                       src={imgUrl}
                       alt={`${product.name} view ${idx + 1}`}
-                      className="w-full h-full max-h-[360px] object-contain mx-auto"
+                      className="w-full h-full max-h-90 object-contain mx-auto"
                     />
 
                     {/* 🔍 Hover Lens */}
@@ -208,7 +208,7 @@ export default function ProductModal({
 
           {/* Bottom Thumbnails Grid */}
           {displayImages.length > 1 && (
-            <div className="grid grid-cols-6 gap-2 max-h-[140px] overflow-y-auto pt-1">
+            <div className="grid grid-cols-6 gap-2 max-h-35 overflow-y-auto pt-1">
               {displayImages.map((imgUrl, idx) => (
                 <button
                   key={`thumb-${idx}`}
@@ -262,7 +262,7 @@ export default function ProductModal({
                       key={size}
                       type="button"
                       onClick={() => setSelectedSize(size)}
-                      className={`h-9 min-w-[36px] px-3 rounded-md text-xs font-semibold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
+                      className={`h-9 min-w-9 px-3 rounded-md text-xs font-semibold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
                         isSelected
                           ? "bg-white text-black border border-black ring-1 ring-black"
                           : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
