@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react"; // 👈 useEffect ফেলে দিয়ে শুধু useMemo রাখা হয়েছে
-import { FiHeart, FiShoppingCart } from "react-icons/fi";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -132,7 +131,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         )}
 
         {/* Hover Action Buttons */}
-        <div className="absolute w-full rounded-2xl h-[335px] bg-black/60 flex justify-center items-end pb-5 opacity-0  group-hover/card:opacity-100 transition-opacity duration-300 z-20">
+        <div className="absolute w-full rounded-2xl h-83.75 bg-black/60 flex justify-center items-end pb-5 opacity-0  group-hover/card:opacity-100 transition-opacity duration-300 z-20">
           <button
             className="btn btn-wide"
             onClick={(e) => {
@@ -198,7 +197,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
           {/* COLOR SELECTOR */}
           <div className="bg-white flex items-center gap-2 mb-2 w-full">
-            <span className="text-xs font-bold text-neutral-500 min-w-[45px]">
+            <span className="text-xs font-bold text-neutral-500 min-w-11.25">
               Color:
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -227,7 +226,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
           {/* SIZES SELECTOR */}
           <div className="bg-white flex items-center gap-2 mb-3 w-full">
-            <span className="text-xs font-bold text-neutral-500 min-w-[45px]">
+            <span className="text-xs font-bold text-neutral-500 min-w-11.25">
               Sizes:
             </span>
             <div className="flex flex-wrap gap-1">
