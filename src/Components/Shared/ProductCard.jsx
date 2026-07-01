@@ -271,14 +271,13 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       {/* DETACHED MODAL COMPONENT */}
       {isModalOpen && (
         <ProductModal
-          key={product.id}
-          product={product}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          availableColors={availableColors.map(c => c.name)}
-          availableSizes={availableSizes}
-          onAddToCart={handleAddToCartSubmit}
-        />
+  key={product.id}
+  product={product}
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  availableColors={availableColors} // 👈 কোনো .map() ছাড়া সরাসরি অবজেক্ট অ্যারে যাবে
+  onAddToCart={handleAddToCartSubmit}
+/>
       )}
     </>
   );

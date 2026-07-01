@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FiX, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
@@ -12,21 +12,38 @@ export default function ProductModal({
   isOpen, 
   onClose, 
   availableColors, 
-  availableSizes, 
-  colorMap, 
   onAddToCart 
 }) {
-  // 💡 useEffect ফেলে দিয়ে সরাসরি ইনিশিয়াল ভ্যালু হিসেবে প্রপ্স থেকে ডাটা সেট করা হলো
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(availableSizes[0] || "");
-  const [selectedColor, setSelectedColor] = useState(availableColors[0] || "");
+  
+  // ১. সিলেক্টেড কালার স্টেট (কার্ডের মতো অবজেক্টের নাম ট্র্যাক করবে)
+  const [selectedColor, setSelectedColor] = useState(availableColors[0]?.name || "");
+
+  // ২. মোডালের ভেতরেও সিলেক্টেড কালারের ওপর বেইজ করে একটিভ ভ্যারিয়েন্ট ফিল্টার
+  const activeVariant = useMemo(() => {
+    return product.variants?.find(v => v.color && v.color.name === selectedColor) || product.variants?.[0];
+  }, [product.variants, selectedColor]);
+
+  // ৩. ডাইনামিকালি মোডালের জন্য সাইজ বের করা (যেন ভুল কালারের সাইজ মোডালে শো না করে)
+  const modalAvailableSizes = useMemo(() => {
+    const extractedSizes = activeVariant && activeVariant.sizes
+      ? activeVariant.sizes.map((s) => s.size)
+      : [];
+    return extractedSizes.length > 0 ? [...new Set(extractedSizes)] : ["S", "M", "L", "XL"];
+  }, [activeVariant]);
+
+
+  const [selectedSize, setSelectedSize] = useState(modalAvailableSizes[0] || "");
+  
+  const currentSizeToShow = useMemo(() => {
+    return modalAvailableSizes.includes(selectedSize) ? selectedSize : modalAvailableSizes[0];
+  }, [selectedSize, modalAvailableSizes]);
 
   if (!isOpen) return null;
 
   const incrementQty = () => setQuantity((prev) => prev + 1);
   const decrementQty = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
-  const activeVariant = product.variants?.find(v => v.color && v.color.name === selectedColor) || product.variants?.[0];
   const displayImages = activeVariant?.images || product.images || ["https://via.placeholder.com/400x400?text=Product"];
 
   const numericPrice = Number(product.price) || 0;
@@ -40,7 +57,7 @@ export default function ProductModal({
   const handleSubmit = () => {
     onAddToCart({
       quantity,
-      size: selectedSize,
+      size: currentSizeToShow,
       color: selectedColor,
       finalPrice: numericPrice
     });
@@ -139,11 +156,11 @@ export default function ProductModal({
             {/* MODAL SIZE SELECTOR */}
             <div>
               <label className="block text-[11px] font-extrabold text-neutral-700 uppercase tracking-wider mb-2">
-                Size: <span className="text-neutral-400 font-normal ml-1">{selectedSize}</span>
+                Size: <span className="text-neutral-400 font-normal ml-1">{currentSizeToShow}</span>
               </label>
               <div className="flex flex-wrap gap-2">
-                {availableSizes.map((size) => {
-                  const isSelected = selectedSize === size;
+                {modalAvailableSizes.map((size) => {
+                  const isSelected = currentSizeToShow === size;
                   return (
                     <button
                       key={size}
@@ -168,22 +185,21 @@ export default function ProductModal({
                 Color: <span className="text-neutral-400 font-normal capitalize ml-1">{selectedColor}</span>
               </label>
               <div className="flex flex-wrap gap-3 py-1">
-                {availableColors.map((colorName) => {
-                  const normalized = colorName.toLowerCase();
-                  const bgClass = colorMap[normalized] || "bg-neutral-300";
-                  const isSelected = selectedColor === colorName;
+                {availableColors.map((colorObj) => {
+                  const isSelected = selectedColor === colorObj.name;
                   return (
                     <button
-                      key={colorName}
+                      key={colorObj.id || colorObj.name}
                       type="button"
-                      onClick={() => setSelectedColor(colorName)}
-                      className={`w-6 h-6 rounded-full ${bgClass} cursor-pointer transition-all duration-200 hover:scale-110 relative ${
+                      onClick={() => setSelectedColor(colorObj.name)}
+                      style={{ backgroundColor: colorObj.code }} // 👈 colorMap এর ঝামেলা বাদ দিয়ে ডাইনামিক হেক্স কোড ব্যবহার করা হয়েছে
+                      className={`w-6 h-6 rounded-full cursor-pointer transition-all duration-200 hover:scale-110 relative ${
                         isSelected
                           ? "ring-2 ring-offset-2 ring-neutral-900 scale-110 z-10"
                           : "border border-neutral-200 hover:border-neutral-400"
                       }`}
-                      title={colorName}
-                      aria-label={`Select ${colorName} color`}
+                      title={colorObj.name}
+                      aria-label={`Select ${colorObj.name} color`}
                     />
                   );
                 })}
