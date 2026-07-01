@@ -15,23 +15,24 @@ export default function ProductModal({
   onAddToCart 
 }) {
   const [quantity, setQuantity] = useState(1);
+  const [swiperRef, setSwiperRef] = useState(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   
-  // ১. সিলেক্টেড কালার স্টেট (কার্ডের মতো অবজেক্টের নাম ট্র্যাক করবে)
+  // ১. সিলেক্টেড কালার স্টেট
   const [selectedColor, setSelectedColor] = useState(availableColors[0]?.name || "");
 
-  // ২. মোডালের ভেতরেও সিলেক্টেড কালারের ওপর বেইজ করে একটিভ ভ্যারিয়েন্ট ফিল্টার
+  // ২. মোডালের ভেতরেও সিলেক্টেড কালারের ওপর বেইজ করে একটিভ ভ্যারিয়েন্ট ফিল্টার
   const activeVariant = useMemo(() => {
     return product.variants?.find(v => v.color && v.color.name === selectedColor) || product.variants?.[0];
   }, [product.variants, selectedColor]);
 
-  // ৩. ডাইনামিকালি মোডালের জন্য সাইজ বের করা (যেন ভুল কালারের সাইজ মোডালে শো না করে)
+  // ৩. ডাইনামিকালি মোডালের জন্য সাইজ বের করা
   const modalAvailableSizes = useMemo(() => {
     const extractedSizes = activeVariant && activeVariant.sizes
       ? activeVariant.sizes.map((s) => s.size)
       : [];
     return extractedSizes.length > 0 ? [...new Set(extractedSizes)] : ["S", "M", "L", "XL"];
   }, [activeVariant]);
-
 
   const [selectedSize, setSelectedSize] = useState(modalAvailableSizes[0] || "");
   
@@ -53,6 +54,14 @@ export default function ProductModal({
     : discountPercent > 0 
       ? numericPrice / (1 - discountPercent / 100) 
       : 0;
+
+  // থাম্বনেইলে ক্লিক করলে মেইন স্লাইডার চেঞ্জ করার ফাংশন
+  const handleThumbnailClick = (index) => {
+    setActiveImageIndex(index);
+    if (swiperRef) {
+      swiperRef.slideTo(index);
+    }
+  };
 
   const handleSubmit = () => {
     onAddToCart({
@@ -81,53 +90,75 @@ export default function ProductModal({
           <FiX className="w-4 h-4 stroke-[2.5]" />
         </button>
 
-        {/* Left Column: Image Slider */}
-        <div className="flex-1 w-full aspect-square md:h-[420px] bg-neutral-50 border border-neutral-100 rounded-2xl relative overflow-hidden group/slider">
-          <Swiper
-            key={`modal-${product.id}-${selectedColor}`}
-            modules={[Navigation, Pagination, A11y, Autoplay]}
-            spaceBetween={0}
-            slidesPerView={1}
-            loop={displayImages.length > 1}
-            autoplay={displayImages.length > 1 ? { delay: 4000, disableOnInteraction: false } : false}
-            pagination={{ clickable: true, dynamicBullets: true }}
-            navigation={{ nextEl: ".modal-swiper-next", prevEl: ".modal-swiper-prev" }}
-            className="w-full h-full rounded-2xl"
-            style={{
-              "--swiper-pagination-color": "#2c2c2e",
-              "--swiper-pagination-bullet-inactive-color": "#a3a3a3",
-              "--swiper-pagination-bullet-inactive-opacity": "0.4",
-              "--swiper-pagination-bullet-size": "7px",
-            }}
-          >
-            {displayImages.map((imgUrl, idx) => (
-              <SwiperSlide key={`modal-${imgUrl}-${idx}`} className="bg-white flex items-center justify-center p-8 select-none w-full h-full">
-                <img
-                  src={imgUrl}
-                  alt={`${product.name} view ${idx + 1}`}
-                  className="w-full h-full max-h-[340px] object-contain"
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+        {/* Left Column: Image Slider & Thumbnails Grid (image_ba43a1.png এর মতো) */}
+        <div className="flex-1 w-full flex flex-col gap-4">
+          
+          {/* Main Large Image Swiper */}
+          <div className="w-full aspect-square md:h-[400px] bg-white border border-neutral-100 rounded-2xl relative overflow-hidden group/slider flex items-center justify-center">
+            <Swiper
+              onSwiper={setSwiperRef}
+              key={`modal-${product.id}-${selectedColor}`}
+              modules={[Navigation, Pagination, A11y, Autoplay]}
+              spaceBetween={0}
+              slidesPerView={1}
+              onSlideChange={(swiper) => setActiveImageIndex(swiper.activeIndex)}
+              className="w-full h-full rounded-2xl"
+            >
+              {displayImages.map((imgUrl, idx) => (
+                <SwiperSlide key={`modal-${imgUrl}-${idx}`} className="bg-white flex items-center justify-center select-none w-full h-full p-4">
+                  <img
+                    src={imgUrl}
+                    alt={`${product.name} view ${idx + 1}`}
+                    className="w-full h-full max-h-[360px] object-contain mx-auto" // object-contain ব্যবহারের ফলে ছবি কাটবে না
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
 
+            {displayImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="modal-swiper-prev absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 cursor-pointer rounded-full bg-white border border-neutral-200/80 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200"
+                  onClick={() => swiperRef?.slidePrev()}
+                  aria-label="Previous slide"
+                >
+                  <FiChevronLeft className="w-5 h-5 stroke-[2.2]" />
+                </button>
+                <button
+                  type="button"
+                  className="modal-swiper-next absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 cursor-pointer rounded-full bg-white border border-neutral-200/80 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200"
+                  onClick={() => swiperRef?.slideNext()}
+                  aria-label="Next slide"
+                >
+                  <FiChevronRight className="w-5 h-5 stroke-[2.2]" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails Grid (হুবহু image_ba43a1.png এর লেআউট) */}
           {displayImages.length > 1 && (
-            <>
-              <button
-                type="button"
-                className="modal-swiper-prev absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 cursor-pointer rounded-full bg-white border border-neutral-200/80 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200"
-                aria-label="Previous slide"
-              >
-                <FiChevronLeft className="w-5 h-5 stroke-[2.2]" />
-              </button>
-              <button
-                type="button"
-                className="modal-swiper-next absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 cursor-pointer rounded-full bg-white border border-neutral-200/80 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200"
-                aria-label="Next slide"
-              >
-                <FiChevronRight className="w-5 h-5 stroke-[2.2]" />
-              </button>
-            </>
+            <div className="grid grid-cols-6 gap-2 max-h-[140px] overflow-y-auto pt-1">
+              {displayImages.map((imgUrl, idx) => (
+                <button
+                  key={`thumb-${idx}`}
+                  type="button"
+                  onClick={() => handleThumbnailClick(idx)}
+                  className={`aspect-square border rounded-md p-1 bg-white overflow-hidden transition-all duration-200 cursor-pointer ${
+                    activeImageIndex === idx 
+                      ? "border-black ring-1 ring-black scale-95" 
+                      : "border-neutral-200 hover:border-neutral-400"
+                  }`}
+                >
+                  <img 
+                    src={imgUrl} 
+                    alt={`thumbnail-${idx}`} 
+                    className="w-full h-full object-contain mx-auto" 
+                  />
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
@@ -192,7 +223,7 @@ export default function ProductModal({
                       key={colorObj.id || colorObj.name}
                       type="button"
                       onClick={() => setSelectedColor(colorObj.name)}
-                      style={{ backgroundColor: colorObj.code }} // 👈 colorMap এর ঝামেলা বাদ দিয়ে ডাইনামিক হেক্স কোড ব্যবহার করা হয়েছে
+                      style={{ backgroundColor: colorObj.code }}
                       className={`w-6 h-6 rounded-full cursor-pointer transition-all duration-200 hover:scale-110 relative ${
                         isSelected
                           ? "ring-2 ring-offset-2 ring-neutral-900 scale-110 z-10"

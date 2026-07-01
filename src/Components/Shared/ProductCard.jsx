@@ -23,8 +23,9 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       ? product.variants
           .map((v) => v.color)
           .filter((c) => c && c.name && c.code)
-          .filter((value, index, self) => 
-            self.findIndex((t) => t.name === value.name) === index
+          .filter(
+            (value, index, self) =>
+              self.findIndex((t) => t.name === value.name) === index,
           )
       : FALLBACK_COLORS;
   }, [product.variants]);
@@ -33,18 +34,24 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
   // ২. সিলেক্টেড কালারের ওপর বেইজ করে একটিভ ভ্যারিয়েন্ট খুঁজে বের করা
   const activeVariant = useMemo(() => {
-    return product.variants?.find((v) => v.color && v.color.name === selectedColor) ||
-      product.variants?.[0];
+    return (
+      product.variants?.find(
+        (v) => v.color && v.color.name === selectedColor,
+      ) || product.variants?.[0]
+    );
   }, [product.variants, selectedColor]);
 
   // ৩. ডাইনামিক সাইজ এক্সট্র্যাকশন (useMemo ব্যবহার করা হয়েছে)
   const availableSizes = useMemo(() => {
-    const extractedSizes = activeVariant && activeVariant.sizes
-      ? activeVariant.sizes.map((s) => s.size)
-      : [];
-    
-    return extractedSizes.length > 0 ? [...new Set(extractedSizes)] : FALLBACK_SIZES;
-  }, [activeVariant]); 
+    const extractedSizes =
+      activeVariant && activeVariant.sizes
+        ? activeVariant.sizes.map((s) => s.size)
+        : [];
+
+    return extractedSizes.length > 0
+      ? [...new Set(extractedSizes)]
+      : FALLBACK_SIZES;
+  }, [activeVariant]);
 
   // ৪. সিলেক্টেড সাইজ স্টেট (এটি ব্যাকআপ হিসেবে ক্লিক করা সাইজ মনে রাখবে)
   const [selectedSize, setSelectedSize] = useState(availableSizes[0]);
@@ -52,7 +59,9 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   // ⚡ ৫. ইফেক্ট ছাড়া স্টেট সিনক্রোনাইজেশন (Derived State Pattern)
   // যদি বর্তমানে সিলেক্টেড সাইজটি এই নতুন কালারের সাইজ লিস্টে না থাকে, তবে প্রথম সাইজটি দেখাবে
   const currentSizeToShow = useMemo(() => {
-    return availableSizes.includes(selectedSize) ? selectedSize : availableSizes[0];
+    return availableSizes.includes(selectedSize)
+      ? selectedSize
+      : availableSizes[0];
   }, [selectedSize, availableSizes]);
 
   // সাইজ বাটনে ক্লিক হ্যান্ডলার
@@ -61,7 +70,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   };
 
   const isList = viewMode === "list";
-  
+
   const displayImages = activeVariant?.images ||
     product.images || ["https://via.placeholder.com/400x400?text=Product"];
 
@@ -112,7 +121,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   return (
     <>
       <div
-        className={`animate-border-red relative border border-neutral-200 rounded-2xl p-4 bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
+        className={` relative border border-neutral-200 rounded-2xl  bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
           isList ? "flex-row items-center gap-6 w-full" : "flex-col h-full"
         }`}
       >
@@ -123,26 +132,15 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         )}
 
         {/* Hover Action Buttons */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-100 md:opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-20">
+        <div className="absolute w-full rounded-2xl h-[335px] bg-black/60 flex justify-center items-end pb-5 opacity-0  group-hover/card:opacity-100 transition-opacity duration-300 z-20">
           <button
-            type="button"
-            className="w-8 h-8 cursor-pointer bg-white border border-neutral-200 rounded shadow-sm flex items-center justify-center text-neutral-600 hover:text-[#ea4c3b] hover:border-[#ea4c3b] hover:bg-red-50 transition-colors"
-            aria-label="Add to favorites"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <FiHeart className="w-4 h-4" />
-          </button>
-
-          <button
-            type="button"
-            className="w-8 h-8 cursor-pointer bg-white border border-neutral-200 rounded shadow-sm flex items-center justify-center text-neutral-600 hover:text-[#ea4c3b] hover:border-[#ea4c3b] hover:bg-red-50 transition-colors"
-            aria-label="Open product quick view"
+            className="btn btn-wide"
             onClick={(e) => {
               e.stopPropagation();
               setIsModalOpen(true);
             }}
           >
-            <FiShoppingCart className="w-4 h-4" />
+            Quick View
           </button>
         </div>
 
@@ -151,7 +149,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           className={`${
             isList ? "w-44 h-44 shrink-0" : "w-full aspect-square mb-4"
           } relative overflow-hidden rounded-xl bg-neutral-50 border border-neutral-100`}
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => null} // after work
         >
           <Swiper
             key={`${product.id}-${selectedColor}`}
@@ -188,7 +186,9 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         </div>
 
         {/* Product Metadata */}
-        <div className={`flex flex-col items-start text-left w-full ${isList ? "flex-1" : "mt-auto"}`}>
+        <div
+          className={`flex flex-col items-start text-left pb-4 pl-4 w-full ${isList ? "flex-1" : "mt-auto"}`}
+        >
           <span className="text-[11px] text-neutral-400 uppercase tracking-wider mb-1">
             {product.category && product.category.name}
           </span>
@@ -233,7 +233,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             <div className="flex flex-wrap gap-1">
               {availableSizes.map((sizeValue) => {
                 // 👈 এখানে ডাইনামিক `currentSizeToShow` চেক করা হচ্ছে
-                const isSelected = currentSizeToShow === sizeValue; 
+                const isSelected = currentSizeToShow === sizeValue;
                 return (
                   <button
                     key={sizeValue}
@@ -271,13 +271,13 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       {/* DETACHED MODAL COMPONENT */}
       {isModalOpen && (
         <ProductModal
-  key={product.id}
-  product={product}
-  isOpen={isModalOpen}
-  onClose={() => setIsModalOpen(false)}
-  availableColors={availableColors} // 👈 কোনো .map() ছাড়া সরাসরি অবজেক্ট অ্যারে যাবে
-  onAddToCart={handleAddToCartSubmit}
-/>
+          key={product.id}
+          product={product}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          availableColors={availableColors} // 👈 কোনো .map() ছাড়া সরাসরি অবজেক্ট অ্যারে যাবে
+          onAddToCart={handleAddToCartSubmit}
+        />
       )}
     </>
   );
