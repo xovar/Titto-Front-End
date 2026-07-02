@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react"; // 👈 useEffect ফেলে দিয়ে শুধু useMemo রাখা হয়েছে
+import { useState, useMemo } from "react"; 
+import { useNavigate } from "react-router-dom"; // 👈 ১. useNavigate ইম্পোর্ট করুন
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -15,6 +16,7 @@ const FALLBACK_COLORS = [{ name: "Default", code: "#d4d4d4" }];
 
 export default function ProductCard({ product, viewMode = "grid" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate(); // 👈 ২. ইনিশিয়ালাইজ করুন
 
   // ১. কালার এক্সট্র্যাকশন
   const availableColors = useMemo(() => {
@@ -31,7 +33,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
   const [selectedColor, setSelectedColor] = useState(availableColors[0]?.name);
 
-  // ২. সিলেক্টেড কালারের ওপর বেইজ করে একটিভ ভ্যারিয়েন্ট খুঁজে বের করা
+  // ২. সিলেক্টেড কালারের ওপর বেইজ করে একটিভ ভ্যারিয়েন্ট খুঁজে বের করা
   const activeVariant = useMemo(() => {
     return (
       product.variants?.find(
@@ -40,7 +42,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
     );
   }, [product.variants, selectedColor]);
 
-  // ৩. ডাইনামিক সাইজ এক্সট্র্যাকশন (useMemo ব্যবহার করা হয়েছে)
+  // ৩. ডাইনামিক সাইজ এক্সট্র্যাকশন
   const availableSizes = useMemo(() => {
     const extractedSizes =
       activeVariant && activeVariant.sizes
@@ -52,20 +54,22 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       : FALLBACK_SIZES;
   }, [activeVariant]);
 
-  // ৪. সিলেক্টেড সাইজ স্টেট (এটি ব্যাকআপ হিসেবে ক্লিক করা সাইজ মনে রাখবে)
   const [selectedSize, setSelectedSize] = useState(availableSizes[0]);
 
-  // ⚡ ৫. ইফেক্ট ছাড়া স্টেট সিনক্রোনাইজেশন (Derived State Pattern)
-  // যদি বর্তমানে সিলেক্টেড সাইজটি এই নতুন কালারের সাইজ লিস্টে না থাকে, তবে প্রথম সাইজটি দেখাবে
   const currentSizeToShow = useMemo(() => {
     return availableSizes.includes(selectedSize)
       ? selectedSize
       : availableSizes[0];
   }, [selectedSize, availableSizes]);
 
-  // সাইজ বাটনে ক্লিক হ্যান্ডলার
   const handleSizeClick = (sizeValue) => {
     setSelectedSize(sizeValue);
+  };
+
+  // ⚡ ৩. কার্ডে ক্লিক করলে ডিটেইলস পেজে যাওয়ার হ্যান্ডলার
+  const handleCardClick = () => {
+    // এখানে product.id বা product.slug পাস করতে পারেন আপনার রাউট স্ট্রাকচার অনুযায়ী
+    navigate(`/product/${product.id}`); 
   };
 
   const isList = viewMode === "list";
@@ -119,8 +123,10 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
   return (
     <>
+      {/* ⚡ ৪. মেইন কন্টেইনারে onClick={handleCardClick} যুক্ত করা হয়েছে */}
       <div
-        className={` relative border border-neutral-200 rounded-2xl  bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
+        onClick={handleCardClick}
+        className={`relative border border-neutral-200 rounded-2xl bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
           isList ? "flex-row items-center gap-6 w-full" : "flex-col h-full"
         }`}
       >
@@ -131,11 +137,11 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         )}
 
         {/* Hover Action Buttons */}
-        <div className="absolute w-full rounded-2xl h-83.75 bg-black/60 flex justify-center items-end pb-5 opacity-0  group-hover/card:opacity-100 transition-opacity duration-300 z-20">
+        <div className="absolute w-full rounded-2xl h-83.75 bg-black/60 flex justify-center items-end pb-5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-20">
           <button
-            className="btn btn-wide"
+            className="btn btn-wide cursor-pointer"
             onClick={(e) => {
-              e.stopPropagation();
+              e.stopPropagation(); // 👈 কার্ড ক্লিকের ইভেন্টকে থামাবে
               setIsModalOpen(true);
             }}
           >
@@ -148,7 +154,6 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           className={`${
             isList ? "w-44 h-44 shrink-0" : "w-full aspect-square mb-4"
           } relative overflow-hidden rounded-xl bg-neutral-50 border border-neutral-100`}
-          onClick={() => null} // after work
         >
           <Swiper
             key={`${product.id}-${selectedColor}`}
@@ -186,7 +191,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
         {/* Product Metadata */}
         <div
-          className={`flex flex-col items-start text-left pb-4 pl-4 w-full ${isList ? "flex-1" : "mt-auto"}`}
+          className={`flex flex-col items-start text-left pb-4 pl-4 pr-4 w-full ${isList ? "flex-1" : "mt-auto"}`}
         >
           <span className="text-[11px] text-neutral-400 uppercase tracking-wider mb-1">
             {product.category && product.category.name}
@@ -209,7 +214,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                     type="button"
                     title={colorObj.name}
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e.stopPropagation(); // 👈 কার্ড ক্লিকের ইভেন্টকে থামাবে
                       setSelectedColor(colorObj.name);
                     }}
                     style={{ backgroundColor: colorObj.code }}
@@ -231,17 +236,16 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             </span>
             <div className="flex flex-wrap gap-1">
               {availableSizes.map((sizeValue) => {
-                // 👈 এখানে ডাইনামিক `currentSizeToShow` চেক করা হচ্ছে
                 const isSelected = currentSizeToShow === sizeValue;
                 return (
                   <button
                     key={sizeValue}
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e.stopPropagation(); // 👈 কার্ড ক্লিকের ইভেন্টকে থামাবে
                       handleSizeClick(sizeValue);
                     }}
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors cursor-pointer ${
                       isSelected
                         ? "bg-neutral-900 border-neutral-900 text-white"
                         : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-400"
@@ -274,7 +278,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           product={product}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          availableColors={availableColors} // 👈 কোনো .map() ছাড়া সরাসরি অবজেক্ট অ্যারে যাবে
+          availableColors={availableColors}
           onAddToCart={handleAddToCartSubmit}
         />
       )}

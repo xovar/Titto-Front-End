@@ -1,274 +1,355 @@
-import { useState, useEffect } from "react";
-import { useLocation, useParams } from "react-router-dom";
-import { 
-  FiHeart, 
-  FiShoppingCart, 
-  FiChevronLeft, 
-  FiChevronRight, 
-  FiStar, 
-  FiTruck, 
-  FiShield, 
-  FiRefreshCw, 
-  FiMinus, 
-  FiPlus,
-  FiChevronDown
+import { useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import {
+  FiHeart,
+  FiShoppingBag,
+  FiChevronLeft,
+  FiChevronRight,
+  FiArrowLeft,
 } from "react-icons/fi";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
 import { toast } from "react-toastify";
 
-// Swiper slider core components
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Thumbs, FreeMode, A11y } from "swiper/modules";
-
-// Swiper CSS
 import "swiper/css";
-import "swiper/css/free-mode";
 import "swiper/css/navigation";
-import "swiper/css/thumbs";
 import "swiper/css/pagination";
 
-const COLOR_MAP = {
-  black: "bg-black",
-  red: "bg-red-500",
-  blue: "bg-blue-500",
-  green: "bg-green-500",
-  yellow: "bg-yellow-500",
-  white: "bg-white border border-neutral-300",
-  gray: "bg-gray-500",
-  purple: "bg-purple-500",
-  pink: "bg-pink-500",
-};
-
-export default function SingleProductDetail() {
-  const location = useLocation();
+export default function SingleProduct() {
   const { id } = useParams();
-  
-  // State initialization 
-  const [product, setProduct] = useState(location.state?.product || null);
-  const [loading, setLoading] = useState(!product);
+  const navigate = useNavigate();
+
+  // ⚡ ১. রিডাক্স স্টোর থেকে রিয়েল ডাটা আনা এবং আইডি দিয়ে ফিল্টার করা
+  const { items: products } = useSelector((state) => state.products);
+  const product = useMemo(() => {
+    return products?.find((p) => p.id === id);
+  }, [products, id]);
+
   const [quantity, setQuantity] = useState(1);
-  const [thumbsSwiper, setThumbsSwiper] = useState(null);
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [activeTab, setActiveTab] = useState("description");
+  const [swiperRef, setSwiperRef] = useState(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  // Fallback API / Database fetch if user refreshes the page directly
-  useEffect(() => {
-    if (!product && id) {
-      setLoading(true);
-      // Replace this block with your actual API endpoint request
-      // fetch(`/api/products/${id}`)
-      //   .then(res => res.json())
-      //   .then(data => { setProduct(data); setLoading(false); })
-      //   .catch(() => setLoading(false));
-      
-      setLoading(false); // Remove this line once your real fetch is implemented
+  // 🔍 Magnifier Box State
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [lensPos, setLensPos] = useState({ x: 0, y: 0 });
+  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+
+  // 🎨 ২. ডাইনামিক কালার লিস্ট বের করা (useMemo এরর ফিক্সড)
+  const availableColors = useMemo(() => {
+    const variants = product?.variants;
+    if (!variants || !Array.isArray(variants)) return [];
+
+    return variants
+      .map((v) => v?.color)
+      .filter((c) => c && c.name && c.code)
+      .filter(
+        (value, index, self) =>
+          self.findIndex((t) => t.name === value.name) === index,
+      );
+  }, [product]);
+
+  // ⚡ ৩. ক্যাসকেডিং রেন্ডার এড়াতে Derived State (কোনো useEffect নেই)
+  const [userSelectedColor, setUserSelectedColor] = useState("");
+  const selectedColor = userSelectedColor || availableColors[0]?.name || "";
+
+  // 🔄 ৪. সিলেক্টেড কালারের ওপর ভিত্তি করে একটিভ ভ্যারিয়েন্ট ফিল্টার
+  const activeVariant = useMemo(() => {
+    const variants = product?.variants;
+    if (!variants || !Array.isArray(variants)) return null;
+
+    return (
+      variants.find((v) => v?.color?.name === selectedColor) ||
+      variants[0] ||
+      null
+    );
+  }, [product, selectedColor]); // 👈 ডিপেন্ডেন্সিতে শুধু product এবং selectedColor থাকবে
+
+  // 📏 ৫. ডাইনামিক সাইজ লিস্ট বের করা
+  const availableSizes = useMemo(() => {
+    const extractedSizes = activeVariant?.sizes
+      ? activeVariant.sizes.map((s) => s.size)
+      : [];
+    return extractedSizes.length > 0 ? [...new Set(extractedSizes)] : [];
+  }, [activeVariant]);
+
+  const [userSelectedSize, setUserSelectedSize] = useState("");
+  // সাইজটি যদি বর্তমান কালার ভ্যারিয়েন্টে এভেইলেবল থাকে তবেই শো করবে
+  const currentSizeToShow = availableSizes.includes(userSelectedSize)
+    ? userSelectedSize
+    : "";
+
+  const incrementQty = () => setQuantity((prev) => prev + 1);
+  const decrementQty = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+
+  // ইমেজ এবং প্রাইস সেটআপ
+  const displayImages = activeVariant?.images || [];
+  const numericPrice = Number(product?.price) || 0;
+  const discountPercent = Number(product?.discount) || 0;
+  const numericOriginalPrice =
+    discountPercent > 0 ? numericPrice / (1 - discountPercent / 100) : 0;
+
+  // 🔍 Magnifier Box লজিক
+  const handleMouseMove = (e) => {
+    const { left, top, width, height } =
+      e.currentTarget.getBoundingClientRect();
+    let x = e.clientX - left;
+    let y = e.clientY - top;
+
+    const lensSize = 120;
+    let lensX = x - lensSize / 2;
+    let lensY = y - lensSize / 2;
+
+    if (lensX < 0) lensX = 0;
+    if (lensX > width - lensSize) lensX = width - lensSize;
+    if (lensY < 0) lensY = 0;
+    if (lensY > height - lensSize) lensY = height - lensSize;
+
+    setLensPos({ x: lensX, y: lensY });
+
+    const zoomX = (lensX / (width - lensSize)) * 100;
+    const zoomY = (lensY / (height - lensSize)) * 100;
+
+    setZoomPos({ x: zoomX, y: zoomY });
+    setIsZoomed(true);
+  };
+
+  const handleThumbnailClick = (index) => {
+    setActiveImageIndex(index);
+    if (swiperRef) swiperRef.slideTo(index);
+  };
+
+  const handleAction = (actionType) => {
+    if (!currentSizeToShow) {
+      toast.error("Please select a size first!");
+      return;
     }
-  }, [id, product]);
 
-  // Dynamic variants variations safely configuration parameters
-  const availableSizes = product?.sizes?.length > 0 ? product.sizes : ["S", "M", "L", "XL"];
-  const availableColors = product?.colors?.length > 0 ? product.colors : ["Black", "White", "Gray"];
-
-  const [selectedSize, setSelectedSize] = useState(availableSizes[0]);
-  const [selectedColor, setSelectedColor] = useState(availableColors[0]);
-
-  // Sync variant parameters if the active routing selection target product updates
-  useEffect(() => {
-    if (product) {
-      setSelectedSize(availableSizes[0]);
-      setSelectedColor(availableColors[0]);
+    if (actionType === "cart") {
+      toast.success(`${quantity}x ${product?.name} added to cart!`);
+    } else if (actionType === "buy_now") {
+      toast.info(`Proceeding to buy ${quantity}x ${product?.name}!`);
+      // Here you would navigate to the checkout page
     }
-  }, [product, availableSizes, availableColors]);
 
-  if (loading) {
-    return <div className="p-16 text-center text-neutral-500">Loading secure product assets...</div>;
-  }
+    console.log(`${actionType} payload:`, {
+      productId: product?.id,
+      variantId: activeVariant?.id,
+      name: product?.name,
+      quantity,
+      size: currentSizeToShow,
+      color: selectedColor,
+      price: numericPrice,
+    });
+  };
 
+  // 🛑 সব হুক ডিক্লেয়ারেশনের পর কন্ডিশনাল রিটার্ন (Rules of Hooks ফিক্সড)
   if (!product) {
     return (
-      <div className="p-16 text-center text-neutral-500 bg-neutral-50 rounded-2xl max-w-md mx-auto my-12 border border-neutral-200">
-        <h2 className="text-lg font-bold text-neutral-800 mb-1">Product Details Not Available</h2>
-        <p className="text-xs text-neutral-400 mb-4">Could not parse data for configuration parameters (ID: {id}).</p>
-        <a href="/" className="inline-block px-4 py-2 bg-neutral-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-black transition-colors">
-          Return To Shop Listings
-        </a>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+        <h2 className="text-xl font-bold text-neutral-700">
+          Product Not Found!
+        </h2>
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm text-neutral-600 hover:text-black border px-4 py-2 rounded-lg"
+        >
+          <FiArrowLeft /> Go Back
+        </button>
       </div>
     );
   }
 
-  const activeColorKey = selectedColor?.toLowerCase();
-  const displayImages = 
-    product.colorImages?.[activeColorKey] || 
-    product.images || 
-    [product.image || "https://via.placeholder.com/600x600?text=Product+Image"];
-
-  const handleAddToCart = () => {
-    toast.success(
-      <div className="flex flex-col gap-0.5 text-left">
-        <span className="font-extrabold text-neutral-900 tracking-tight text-sm">Secured! ⚡</span>
-        <span className="text-xs text-neutral-500">
-          {quantity}x <strong className="text-neutral-800">{product.title}</strong> ({selectedColor} / {selectedSize}) added to your bag.
-        </span>
-      </div>,
-      { position: "bottom-right", autoClose: 3500, theme: "light" }
-    );
-  };
-
   return (
-    <section className="max-w-7xl mx-auto px-4 py-8 md:py-16 bg-white selection:bg-red-100 selection:text-[#ea4c3b]">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
-        
-        {/* LEFT COLUMN: VISUAL GALLERY */}
-        <div className="lg:col-span-7 flex flex-col gap-4">
-          <div className="w-full aspect-square bg-neutral-50 border border-neutral-100 rounded-2xl relative overflow-hidden group/gallery">
-            {product.discount && (
-              <span className="absolute top-4 left-4 bg-[#ea4c3b] text-white text-xs font-bold px-2.5 py-1 rounded-md z-10 shadow-sm">
-                -{product.discount}% OFF
-              </span>
-            )}
-
+    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="flex flex-col lg:flex-row gap-12 items-start">
+        {/* Left Column: Image Area & Grid Thumbnails */}
+        <div className="w-full lg:w-1/2 flex flex-col gap-4">
+          <div className="w-full aspect-square border border-neutral-200 rounded-2xl relative overflow-hidden group/slider flex items-center justify-center bg-white overflow-hidden group/slider flex items-center justify-center bg-white overflow-hidden group/slider flex items-center justify-center bg-white overflow-hidden group/slider flex items-center justify-center bg-white">
             <Swiper
-              key={`gallery-${product.id}-${selectedColor}`}
-              style={{
-                "--swiper-navigation-color": "#2c2c2e",
-                "--swiper-pagination-color": "#ea4c3b",
-              }}
-              spaceBetween={10}
-              navigation={{ nextEl: ".gallery-next", prevEl: ".gallery-prev" }}
-              thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
-              modules={[FreeMode, Navigation, Thumbs, Pagination, A11y]}
-              pagination={{ clickable: true, dynamicBullets: true }}
-              className="w-full h-full rounded-2xl"
+              onSwiper={setSwiperRef}
+              key={`single-${product.id}-${selectedColor}`}
+              modules={[Navigation, Pagination, A11y, Autoplay]}
+              spaceBetween={0}
+              slidesPerView={1}
+              onSlideChange={(swiper) =>
+                setActiveImageIndex(swiper.activeIndex)
+              }
+              className="w-full h-full"
             >
               {displayImages.map((imgUrl, idx) => (
-                <SwiperSlide key={`main-slide-${idx}`} className="flex items-center justify-center bg-white p-6 md:p-12 select-none">
-                  <img 
-                    src={imgUrl} 
-                    alt={`${product.title} perspective ${idx + 1}`} 
-                    className="w-full h-full object-contain max-h-[500px]"
-                  />
+                <SwiperSlide
+                  key={`main-img-${idx}`}
+                  className="flex items-center justify-center p-6 bg-white"
+                >
+                  <div
+                    className="w-full h-full relative overflow-hidden flex items-center justify-center cursor-zoom-in"
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={() => setIsZoomed(false)}
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={product.name}
+                      className="w-full h-full object-contain max-h-[480px] mx-auto"
+                    />
+
+                    {isZoomed && (
+                      <div
+                        className="absolute border border-neutral-300 bg-white/10 pointer-events-none shadow-sm"
+                        style={{
+                          width: "120px",
+                          height: "120px",
+                          left: `${lensPos.x}px`,
+                          top: `${lensPos.y}px`,
+                        }}
+                      />
+                    )}
+
+                    {isZoomed && (
+                      <div
+                        className="absolute inset-0 z-40 border border-neutral-200 bg-white shadow-2xl pointer-events-none rounded-2xl"
+                        style={{
+                          backgroundImage: `url(${imgUrl})`,
+                          backgroundSize: "280%",
+                          backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+                          backgroundRepeat: "no-repeat",
+                        }}
+                      />
+                    )}
+                  </div>
                 </SwiperSlide>
               ))}
             </Swiper>
 
-            {displayImages.length > 1 && (
+            {displayImages.length > 1 && !isZoomed && (
               <>
-                <button type="button" className="gallery-prev absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 border border-neutral-200/80 flex items-center justify-center text-neutral-700 shadow-xs opacity-0 group-hover/gallery:opacity-100 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all cursor-pointer">
+                <button
+                  type="button"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200"
+                  onClick={() => swiperRef?.slidePrev()}
+                >
                   <FiChevronLeft className="w-5 h-5 stroke-[2.2]" />
                 </button>
-                <button type="button" className="gallery-next absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 border border-neutral-200/80 flex items-center justify-center text-neutral-700 shadow-xs opacity-0 group-hover/gallery:opacity-100 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all cursor-pointer">
+                <button
+                  type="button"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200"
+                  onClick={() => swiperRef?.slideNext()}
+                >
                   <FiChevronRight className="w-5 h-5 stroke-[2.2]" />
                 </button>
               </>
             )}
           </div>
 
+          {/* Bottom Thumbnails Grid */}
           {displayImages.length > 1 && (
-            <div className="w-full mt-2">
-              <Swiper
-                onSwiper={setThumbsSwiper}
-                spaceBetween={12}
-                slidesPerView={4}
-                freeMode={true}
-                watchSlidesProgress={true}
-                modules={[FreeMode, Navigation, Thumbs]}
-                className="thumbs-slider"
-              >
-                {displayImages.map((imgUrl, idx) => (
-                  <SwiperSlide key={`thumb-${idx}`} className="cursor-pointer rounded-xl border border-neutral-200 p-2 bg-white aspect-square flex items-center justify-center transition-all opacity-60 [&.swiper-slide-thumb-active]:opacity-100 [&.swiper-slide-thumb-active]:border-neutral-900">
-                    <img src={imgUrl} alt="Thumbnail preview" className="max-h-full object-contain max-w-full" />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+            <div className="flex flex-wrap gap-3 pt-1">
+              {displayImages.map((imgUrl, idx) => (
+                <button
+                  key={`thumb-${idx}`}
+                  type="button"
+                  onClick={() => handleThumbnailClick(idx)}
+                  className={`w-20 h-20 border rounded-xl p-1 bg-white overflow-hidden transition-all duration-200 cursor-pointer ${
+                    activeImageIndex === idx
+                      ? "border-[#ea4c3b] ring-1 ring-[#ea4c3b]"
+                      : "border-neutral-200 hover:border-neutral-400"
+                  }`}
+                >
+                  <img
+                    src={imgUrl}
+                    alt="thumb"
+                    className="w-full h-full object-contain mx-auto"
+                  />
+                </button>
+              ))}
             </div>
           )}
         </div>
 
-        {/* RIGHT COLUMN: PRODUCT DETAILS */}
-        <div className="lg:col-span-5 flex flex-col text-left">
-          <span className="text-xs text-neutral-400 font-bold uppercase tracking-widest mb-2">
-            {product.category || "Premium Collection"}
+        {/* Right Column: Information Panel */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-start text-left pt-2">
+          <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">
+            {product.category?.name}
           </span>
-
-          <h1 className="text-3xl md:text-4xl font-extrabold text-neutral-900 tracking-tight leading-none mb-3">
-            {product.title}
+          <h1 className="text-3xl md:text-4xl font-extrabold text-neutral-900 mb-3 tracking-tight">
+            {product.name}
           </h1>
 
-          <div className="flex items-center gap-4 mb-6 pb-6 border-b border-neutral-100">
-            <div className="flex items-center text-amber-400">
-              {[...Array(5)].map((_, i) => (
-                <FiStar key={i} className="w-4 h-4 fill-current stroke-[1.5]" />
-              ))}
-              <span className="text-xs text-neutral-700 font-bold ml-2">4.9</span>
-            </div>
-            <span className="text-xs text-neutral-400 font-medium">|</span>
-            <span className="text-xs text-neutral-500 hover:underline cursor-pointer">128 verified customer reviews</span>
-          </div>
-
-          <div className="flex items-baseline gap-3 mb-6">
-            <span className="text-3xl font-extrabold text-[#ea4c3b] tracking-tight">
-              ${product.price?.toFixed(2)}
-            </span>
-            {product.originalPrice && (
-              <span className="text-lg text-neutral-400 line-through font-normal">
-                ${product.originalPrice.toFixed(2)}
+          {/* Price & Views */}
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center text-xl font-black">
+              {numericOriginalPrice > 0 && (
+                <span className="text-neutral-400 line-through font-normal mr-3 text-base">
+                  ৳{numericOriginalPrice.toFixed(0)}
+                </span>
+              )}
+              <span className="text-[#ea4c3b] text-2xl">
+                ৳{numericPrice.toFixed(0)}
               </span>
-            )}
+            </div>
+            <div className="h-4 w-px bg-neutral-300" />
+            <div className="flex items-center gap-1 text-sm text-neutral-500">
+              <span className="text-yellow-400 text-base">★★★★★</span>
+              <span>({product.viewed || 0} views)</span>
+            </div>
           </div>
 
           <p className="text-neutral-500 text-sm leading-relaxed mb-8 max-w-xl">
-            {product.description || "Crafted to elevate daily standards with lightweight premium composite integrations."}
+            {product.description}
           </p>
 
-          <div className="space-y-6 mb-8 border-b border-neutral-100 pb-8">
-            {/* COLOR MATRIX SELECTOR */}
-            <div>
-              <label className="block text-xs font-extrabold text-neutral-800 uppercase tracking-wider mb-3">
-                Color: <span className="text-neutral-400 font-normal ml-1 capitalize">{selectedColor}</span>
+          {/* COLOR SELECTOR */}
+          {availableColors.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-xs font-black text-neutral-700 uppercase tracking-wider mb-2.5">
+                Color:{" "}
+                <span className="text-neutral-400 font-normal capitalize ml-1">
+                  {selectedColor}
+                </span>
               </label>
               <div className="flex flex-wrap gap-3">
-                {availableColors.map((colorName) => {
-                  const normalized = colorName.toLowerCase();
-                  const bgClass = COLOR_MAP[normalized] || "bg-neutral-300";
-                  const isSelected = selectedColor === colorName;
-
+                {availableColors.map((colorObj) => {
+                  const isSelected = selectedColor === colorObj.name;
                   return (
                     <button
-                      key={colorName}
+                      key={colorObj.name}
                       type="button"
-                      onClick={() => setSelectedColor(colorName)}
-                      className={`w-7 h-7 rounded-full ${bgClass} cursor-pointer transition-all duration-200 hover:scale-110 relative ${
+                      onClick={() => setUserSelectedColor(colorObj.name)}
+                      style={{ backgroundColor: colorObj.code }}
+                      className={`w-7 h-7 rounded-full cursor-pointer transition-all duration-200 hover:scale-110 relative ${
                         isSelected
                           ? "ring-2 ring-offset-2 ring-neutral-900 scale-105"
                           : "border border-neutral-200"
                       }`}
-                      title={colorName}
-                      aria-label={`Select ${colorName}`}
+                      title={colorObj.name}
                     />
                   );
                 })}
               </div>
             </div>
+          )}
 
-            {/* SIZE MATRIX SELECTOR */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <label className="block text-xs font-extrabold text-neutral-800 uppercase tracking-wider">
-                  Size: <span className="text-neutral-400 font-normal ml-1">{selectedSize}</span>
-                </label>
-                <button type="button" className="text-xs text-neutral-500 underline hover:text-[#ea4c3b] cursor-pointer">Size Guide</button>
-              </div>
+          {/* SIZE SELECTOR */}
+          {availableSizes.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-xs font-black text-neutral-700 uppercase tracking-wider mb-2.5">
+                Size:{" "}
+                <span className="text-neutral-400 font-normal ml-1">
+                  {currentSizeToShow || "Select yours"}
+                </span>
+              </label>
               <div className="flex flex-wrap gap-2">
                 {availableSizes.map((size) => {
-                  const isSelected = selectedSize === size;
+                  const isSelected = currentSizeToShow === size;
                   return (
                     <button
                       key={size}
                       type="button"
-                      onClick={() => setSelectedSize(size)}
-                      className={`h-10 min-w-[44px] px-3 rounded-xl text-xs font-bold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center border ${
+                      onClick={() => setUserSelectedSize(size)}
+                      className={`h-10 min-w-[40px] px-3.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
                         isSelected
-                          ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
-                          : "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400 hover:text-neutral-900"
+                          ? "bg-neutral-900 text-white border border-neutral-900 shadow-sm"
+                          : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
                       }`}
                     >
                       {size}
@@ -277,101 +358,136 @@ export default function SingleProductDetail() {
                 })}
               </div>
             </div>
-          </div>
+          )}
 
-          {/* MAIN TRANSACTION CONTROL BAR */}
-          <div className="flex items-center gap-4 mb-8">
-            <div className="flex items-center border border-neutral-200 rounded-xl h-14 bg-neutral-50 px-1 shrink-0">
+          {/* QUANTITY */}
+          <div className="flex items-center gap-3 mb-5 pt-2">
+            <span className="text-[11px] font-extrabold text-neutral-700 uppercase tracking-wider">
+              Quantity:
+            </span>
+            <div className="flex items-center border border-neutral-200 rounded bg-white h-8 overflow-hidden shadow-xs">
               <button
                 type="button"
-                onClick={() => setQuantity(q => q > 1 ? q - 1 : 1)}
-                className="w-10 h-full flex items-center justify-center text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
+                onClick={decrementQty}
+                className="w-8 h-full flex items-center justify-center hover:bg-neutral-50 text-neutral-500 text-base border-r border-neutral-200"
               >
-                <FiMinus className="w-3.5 h-3.5" />
+                -
               </button>
-              <span className="w-8 text-center text-sm font-bold text-neutral-800 select-none">
+              <span className="w-10 text-center text-xs font-semibold select-none text-neutral-800">
                 {quantity}
               </span>
               <button
                 type="button"
-                onClick={() => setQuantity(q => q + 1)}
-                className="w-10 h-full flex items-center justify-center text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
+                onClick={incrementQty}
+                className="w-8 h-full flex items-center justify-center hover:bg-neutral-50 text-neutral-500 text-base border-l border-neutral-200"
               >
-                <FiPlus className="w-3.5 h-3.5" />
+                +
               </button>
             </div>
+          </div>
 
+          {/* 📏 SIZE & CARE GUIDE */}
+          <div className="flex gap-5 text-xs font-medium text-neutral-800 mb-4 select-none pt-2">
             <button
               type="button"
-              onClick={handleAddToCart}
-              className="flex-1 bg-neutral-900 hover:bg-black text-white font-bold text-xs uppercase tracking-widest h-14 rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-3 cursor-pointer"
+              className="cursor-pointer hover:opacity-80 flex items-center gap-1.5 bg-transparent border-0 p-0"
             >
-              <FiShoppingCart className="w-4 h-4" />
-              Add To Cart — ${(product.price * quantity).toFixed(2)}
+              <svg
+                className="w-4 h-4 text-neutral-800"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 9h18v6H3z" />
+                <path d="M6 9v3M9 9v2M12 9v3M15 9v2M18 9v3" />
+              </svg>
+              Size guide
             </button>
-
             <button
               type="button"
-              onClick={() => setIsWishlisted(!isWishlisted)}
-              className={`w-14 h-14 border rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                isWishlisted 
-                  ? "border-red-100 bg-red-50 text-[#ea4c3b]" 
-                  : "border-neutral-200 text-neutral-600 hover:border-neutral-400 hover:text-neutral-900"
-              }`}
-              aria-label="Save to list"
+              className="cursor-pointer hover:opacity-80 flex items-center gap-1.5 bg-transparent border-0 p-0"
             >
-              <FiHeart className={`w-5 h-5 ${isWishlisted ? "fill-current" : ""}`} />
+              <svg
+                className="w-4 h-4 text-neutral-800"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 4h14l1 7H4z" />
+                <path d="M4 11h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+                <path d="M9 14h6" />
+              </svg>
+              Care guide
             </button>
           </div>
 
-          {/* VALUE ASSURANCE BADGES */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 border border-neutral-100 rounded-2xl bg-neutral-50/50 mb-8">
-            <div className="flex items-center gap-3 text-neutral-600">
-              <FiTruck className="w-4 h-4 text-[#ea4c3b] shrink-0" />
-              <span className="text-xs font-medium text-neutral-700">Free priority dispatch</span>
+          {/* 🔥 LIVE TRACKING DATA BOX */}
+          <div className="border border-neutral-300 rounded-2xs p-3 bg-white text-xs text-neutral-900 space-y-2.5 mb-5 max-w-md w-full font-normal pt-2">
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-500 font-bold text-sm select-none">
+                🗹
+              </span>
+              <span>
+                <strong>Viewed:</strong> 232 people recently VIEWED this product.
+              </span>
             </div>
-            <div className="flex items-center gap-3 text-neutral-600">
-              <FiShield className="w-4 h-4 text-[#ea4c3b] shrink-0" />
-              <span className="text-xs font-medium text-neutral-700">2-year legal coverage</span>
-            </div>
-            <div className="flex items-center gap-3 text-neutral-600">
-              <FiRefreshCw className="w-4 h-4 text-[#ea4c3b] shrink-0" />
-              <span className="text-xs font-medium text-neutral-700">30-day simple swap</span>
+            <div className="flex items-center gap-2">
+              <span className="text-black font-bold text-sm select-none">
+                🔥
+              </span>
+              <span>
+                <strong>Popular:</strong> 5 people have BOUGHT this product.
+              </span>
             </div>
           </div>
 
-          {/* EXPANDABLE ACCORDIONS */}
-          <div className="border-t border-neutral-100 divide-y divide-neutral-100 text-sm">
-            {["description", "specifications", "shipping"].map((tabName) => (
-              <div key={tabName} className="py-4">
+          {/* DYNAMIC ACTION BUTTONS BLOCK (image_baa901.png & image_baa9b8.png এর হুবহু ডিজাইন) */}
+          <div className="space-y-2 w-full max-w-md mt-auto pt-2">
+            {!currentSizeToShow ? (
+              /* ১. সাইজ সিলেক্ট না থাকলে: ফুল-উইথ কালো বাটন (image_baa901.png) */
+              <button
+                type="button"
+                className="w-full bg-black text-white font-medium text-sm py-3 rounded transition-colors"
+                onClick={() => toast.error("Please select a size first!")}
+              >
+                Select Size
+              </button>
+            ) : (
+              /* ২. সাইজ সিলেক্ট থাকলে: বিভক্ত বাটন (image_baa9b8.png) */
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setActiveTab(activeTab === tabName ? "" : tabName)}
-                  className="w-full flex justify-between items-center font-bold text-neutral-800 uppercase tracking-wider text-xs cursor-pointer text-left"
+                  className="bg-black cursor-pointer hover:bg-neutral-900 text-white font-medium text-sm py-3 rounded transition-all flex items-center justify-center gap-1.5"
+                  onClick={() => handleAction("buy_now")}
                 >
-                  <span>{tabName}</span>
-                  <FiChevronDown className={`w-4 h-4 text-neutral-400 transition-transform duration-200 ${activeTab === tabName ? "rotate-180 text-neutral-800" : ""}`} />
+                  Buy Now <span className="text-xs">❯</span>
                 </button>
-                {activeTab === tabName && (
-                  <div className="mt-3 text-neutral-500 leading-relaxed text-xs transition-all">
-                    {tabName === "description" && (product.longDescription || "This is a detailed overview of materials.")}
-                    {tabName === "specifications" && (
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Premium structural composition</li>
-                        <li>Water resistant treatment (IPX4 rating)</li>
-                        <li>Locally sourced responsible materials</li>
-                        <li>Weight parameter: 340g lightweight profile</li>
-                      </ul>
-                    )}
-                    {tabName === "shipping" && "Standard ground tracking orders deliver within 3–5 structural business cycles."}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  className="bg-white cursor-pointer hover:bg-neutral-900 text-black border hover:text-white border-black font-medium text-sm py-3 rounded transition-all flex items-center justify-center gap-1.5"
+                  onClick={() => handleAction("cart")}
+                >
+                  Add To Cart <FiShoppingBag className="w-4 h-4 mb-0.5" />
+                </button>
               </div>
-            ))}
-          </div>
+            )}
 
+            {/* ৩. উইশলিস্ট বাটন (উভয় ক্ষেত্রেই নিচে থাকবে) */}
+            <button
+              type="button"
+              className="w-full cursor-pointer bg-white hover:bg-neutral-900 text-neutral-800 hover:text-white border border-neutral-300 font-medium text-sm py-2.5 rounded transition-colors flex items-center justify-center gap-2"
+            >
+              Add to Wishlist <FiHeart className="w-4 h-4 " />
+            </button>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
