@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react"; 
-import { useNavigate } from "react-router-dom"; // 👈 ১. useNavigate ইম্পোর্ট করুন
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -16,7 +16,7 @@ const FALLBACK_COLORS = [{ name: "Default", code: "#d4d4d4" }];
 
 export default function ProductCard({ product, viewMode = "grid" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const navigate = useNavigate(); // 👈 ২. ইনিশিয়ালাইজ করুন
+  const navigate = useNavigate();
 
   // ১. কালার এক্সট্র্যাকশন
   const availableColors = useMemo(() => {
@@ -66,9 +66,8 @@ export default function ProductCard({ product, viewMode = "grid" }) {
     setSelectedSize(sizeValue);
   };
 
-  // ⚡ ৩. কার্ডে ক্লিক করলে ডিটেইলস পেজে যাওয়ার হ্যান্ডলার
+  // ⚡ কার্ডে ক্লিক করলে ডিটেইলস পেজে যাওয়ার হ্যান্ডলার
   const handleCardClick = () => {
-    // এখানে product.id বা product.slug পাস করতে পারেন আপনার রাউট স্ট্রাকচার অনুযায়ী
     navigate(`/product/${product.id}`); 
   };
 
@@ -85,7 +84,28 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       ? numericPrice / (1 - discountPercent / 100)
       : 0;
 
+  // ⚡ মোডাল সাবমিশন হ্যান্ডলার (Buy Now এবং Add to Cart দুটোই হ্যান্ডেল করবে)
   const handleAddToCartSubmit = (modalData) => {
+    const itemToCheckout = {
+      id: product.id,
+      name: product.name,
+      image: activeVariant?.images?.[0] || product.images?.[0] || displayImages[0],
+      price: modalData.finalPrice / modalData.quantity, // Checkout পেজের গুণফলের সুবিধার জন্য একক মূল্য বের করা হলো
+      quantity: modalData.quantity,
+      size: modalData.size,
+      color: modalData.color,
+    };
+
+    // 🚀 অ্যাকশন যদি 'buy_now' হয়, সরাসরি Checkout পেজে ডেটা সহ রিডাইরেক্ট করবে
+    if (modalData.action === "buy_now") {
+      setIsModalOpen(false);
+      navigate("/checkout", { 
+        state: { checkoutItem: itemToCheckout } 
+      });
+      return; 
+    }
+
+    // 🛒 সাধারণ 'cart' অ্যাকশন হলে নিচের লজিক কাজ করবে
     console.log("Added to cart payload submission:", {
       ...product,
       quantity: modalData.quantity,
@@ -123,7 +143,6 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
   return (
     <>
-      {/* ⚡ ৪. মেইন কন্টেইনারে onClick={handleCardClick} যুক্ত করা হয়েছে */}
       <div
         onClick={handleCardClick}
         className={`relative border border-neutral-200 rounded-2xl bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
@@ -141,7 +160,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           <button
             className="btn btn-wide cursor-pointer"
             onClick={(e) => {
-              e.stopPropagation(); // 👈 কার্ড ক্লিকের ইভেন্টকে থামাবে
+              e.stopPropagation(); // কার্ড ক্লিকের ইভেন্টকে থামাবে
               setIsModalOpen(true);
             }}
           >
@@ -214,7 +233,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                     type="button"
                     title={colorObj.name}
                     onClick={(e) => {
-                      e.stopPropagation(); // 👈 কার্ড ক্লিকের ইভেন্টকে থামাবে
+                      e.stopPropagation(); // কার্ড ক্লিকের ইভেন্টকে থামাবে
                       setSelectedColor(colorObj.name);
                     }}
                     style={{ backgroundColor: colorObj.code }}
@@ -242,7 +261,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                     key={sizeValue}
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation(); // 👈 কার্ড ক্লিকের ইভেন্টকে থামাবে
+                      e.stopPropagation(); // কার্ড ক্লিকের ইভেন্টকে থামাবে
                       handleSizeClick(sizeValue);
                     }}
                     className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors cursor-pointer ${

@@ -3,25 +3,30 @@ import Home from "../Pages/Home/Home";
 import RootLayout from "../Layouts/RootLayout";
 import Men from "../Pages/Men/Men";
 import SingleProductDetail from "../Components/Shared/SingleProductDetail";
+import Checkout from "../Components/Shared/Checkout"; 
 //import NotFound from '../pages/NotFound';
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
-    //errorElement: <NotFound />, // Catches 404s or rendering crashes
+    //errorElement: <NotFound />, 
     children: [
       {
-        index: true, // This means it's the default page for '/'
+        index: true, 
         element: <Home />,
       },
       {
-        path: "/men", // This creates the '/men' route
+        path: "/men", 
         element: <Men />,
       },
       {
-        path: "/product/:id", // Dynamic route parameter
+        path: "/product/:id", 
         element: <SingleProductDetail />,
+      },
+      {
+        path: "/checkout", 
+        element: <Checkout />,
       },
     ],
   },

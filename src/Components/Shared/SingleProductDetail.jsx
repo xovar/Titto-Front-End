@@ -125,14 +125,8 @@ export default function SingleProduct() {
       return;
     }
 
-    if (actionType === "cart") {
-      toast.success(`${quantity}x ${product?.name} added to cart!`);
-    } else if (actionType === "buy_now") {
-      toast.info(`Proceeding to buy ${quantity}x ${product?.name}!`);
-      // Here you would navigate to the checkout page
-    }
-
-    console.log(`${actionType} payload:`, {
+    // 📦 ডেটা পেলোড (Payload) তৈরি করা
+    const orderPayload = {
       productId: product?.id,
       variantId: activeVariant?.id,
       name: product?.name,
@@ -140,7 +134,21 @@ export default function SingleProduct() {
       size: currentSizeToShow,
       color: selectedColor,
       price: numericPrice,
-    });
+      image: displayImages[0] || "https://via.placeholder.com/150", // প্রথম ইমেজটি পাস করা হচ্ছে
+      category: product.category?.name || ""
+    };
+
+    if (actionType === "cart") {
+      toast.success(`${quantity}x ${product?.name} added to cart!`);
+      // এখানে আপনার কার্ট রিডাক্স অ্যাকশন ডিসপ্যাচ করতে পারেন: dispatch(addToCart(orderPayload));
+    } else if (actionType === "buy_now") {
+      toast.info(`Proceeding to buy ${quantity}x ${product?.name}!`);
+      
+      // ⚡ রিঅ্যাক্ট রাউটারের মাধ্যমে ডেটা সহ চেকাউট পেজে নেভিগেট করা
+      navigate("/checkout", { state: { checkoutItem: orderPayload } });
+    }
+
+    console.log(`${actionType} payload:`, orderPayload);
   };
 
   // 🛑 সব হুক ডিক্লেয়ারেশনের পর কন্ডিশনাল রিটার্ন (Rules of Hooks ফিক্সড)
