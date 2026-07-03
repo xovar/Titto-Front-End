@@ -48,17 +48,11 @@ export default function Cart() {
       return;
     }
     
+    // 💡 এখানে কোনো জোড়াতালি বা ডামি অবজেক্ট তৈরি না করে সরাসরি 
+    // পুরো cartItems অ্যারেটি স্টেট হিসেবে পাঠানো হচ্ছে।
     navigate("/checkout", {
       state: {
-        checkoutItem: {
-          id: "cart-group",
-          name: cartItems.map((i) => i.name).join(", "),
-          image: cartItems[0]?.image || "https://via.placeholder.com/150",
-          price: subtotal / cartItems.reduce((acc, i) => acc + i.quantity, 0), 
-          quantity: cartItems.reduce((acc, i) => acc + i.quantity, 0),
-          size: cartItems[0]?.selectedSize || "N/A",
-          color: cartItems[0]?.variantColor || "N/A",
-        },
+        cartItems: cartItems, 
       },
     });
   };
