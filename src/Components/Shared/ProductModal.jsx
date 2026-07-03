@@ -1,4 +1,7 @@
 import { useState, useMemo } from "react";
+import { useDispatch } from "react-redux"; // 👈 Redux dispatch হুক ইম্পোর্ট করা হলো
+import { useNavigate } from "react-router-dom"; // 👈 রাউটিং এর জন্য useNavigate ইম্পোর্ট করা হলো
+import { addToCart } from "../../store/features/cart/cartSlice"; // 👈 আপনার স্লাইসের সঠিক পাথ দিন
 import { FiX, FiChevronLeft, FiChevronRight, FiHeart, FiShoppingBag } from "react-icons/fi";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
@@ -14,6 +17,9 @@ export default function ProductModal({
   availableColors, 
   onAddToCart 
 }) {
+  const dispatch = useDispatch(); // 👈 ডিসপ্যাচ ডিক্লেয়ার করা হলো
+  const navigate = useNavigate(); // 👈 নেভিগেট ডিক্লেয়ার করা হলো
+
   const [quantity, setQuantity] = useState(1);
   const [swiperRef, setSwiperRef] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -97,18 +103,47 @@ export default function ProductModal({
     setIsZoomed(false);
   };
 
+  // 🚀 রেডাক্সের সাথে কার্ট অ্যাকশন হ্যান্ডলার
   const handleAction = (actionType) => {
     if (!currentSizeToShow) {
       alert("Please select a size first!");
       return;
     }
-    onAddToCart({
-      quantity,
+
+    // রেডাক্স স্টোরে পাঠানোর জন্য প্রোডাক্ট অবজেক্ট তৈরি
+    const itemToDispatch = {
+      id: product.id || product._id,
+      name: product.name,
+      image: displayImages[0],
+      price: numericPrice,
+      quantity: quantity,
       size: currentSizeToShow,
-      color: selectedColor,
-      finalPrice: numericPrice,
-      action: actionType
-    });
+      color: selectedColor || "Default",
+    };
+
+    // ১. রেডাক্স অ্যাকশন ট্রিগার করে স্টোরে ডেটা সেভ করা
+    dispatch(addToCart(itemToDispatch));
+
+    // ২. প্যারেন্ট কম্পোনেন্টের যদি কোনো অন-ক্লিক হ্যান্ডলার প্রয়োজন হয় (অপশনাল)
+    if (onAddToCart) {
+      onAddToCart({
+        quantity,
+        size: currentSizeToShow,
+        color: selectedColor,
+        finalPrice: numericPrice,
+        action: actionType
+      });
+    }
+
+    // ৩. অ্যাকশন টাইপ অনুযায়ী ইউজার এক্সপেরিয়েন্স হ্যান্ডল করা
+    if (actionType === "buy_now") {
+      onClose(); // মোডাল বন্ধ হবে
+      navigate("/cart"); // সরাসরি কার্ট পেজে নিয়ে যাবে
+    } else {
+      // শুধু 'Add to cart' হলে একটি কনফার্মেশন অ্যালার্ট দিয়ে মোডাল বন্ধ করে দিবে
+      alert("Product added to cart successfully! 🛒");
+      onClose();
+    }
   };
 
   return (
@@ -143,7 +178,6 @@ export default function ProductModal({
             >
               {displayImages.map((imgUrl, idx) => (
                 <SwiperSlide key={`modal-${imgUrl}-${idx}`} className="bg-white flex items-center justify-center select-none w-full h-full p-4">
-                  {/* 🔍 Magnifier Container (কার্সার এখন জুম-ইন লোগো দেখাবে) */}
                   <div 
                     className="w-full h-full relative overflow-hidden flex items-center justify-center cursor-zoom-in"
                     onMouseMove={handleMouseMove}
@@ -155,7 +189,6 @@ export default function ProductModal({
                       className="w-full h-full max-h-90 object-contain mx-auto"
                     />
 
-                    {/* 🔍 Hover Lens */}
                     {isZoomed && (
                       <div 
                         className="absolute border border-neutral-400 bg-white/20 pointer-events-none shadow-md shadow-black/10"
@@ -168,7 +201,6 @@ export default function ProductModal({
                       />
                     )}
 
-                    {/* 🔍 Separate Magnifier View */}
                     {isZoomed && (
                       <div 
                         className="absolute inset-0 z-40 border border-neutral-300 bg-white shadow-xl pointer-events-none rounded-2xl"
@@ -185,7 +217,6 @@ export default function ProductModal({
               ))}
             </Swiper>
 
-            {/* স্লাইডার নেভিগেশন বাটন */}
             {displayImages.length > 1 && !isZoomed && (
               <>
                 <button
@@ -206,7 +237,6 @@ export default function ProductModal({
             )}
           </div>
 
-          {/* Bottom Thumbnails Grid */}
           {displayImages.length > 1 && (
             <div className="grid grid-cols-6 gap-2 max-h-35 overflow-y-auto pt-1">
               {displayImages.map((imgUrl, idx) => (
@@ -326,7 +356,7 @@ export default function ProductModal({
             </div>
           </div>
 
-          {/* 📏 SIZE & CARE GUIDE */}
+          {/* SIZE & CARE GUIDE */}
           <div className="flex gap-5 text-xs font-medium text-neutral-800 mb-4 select-none">
             <button type="button" className="cursor-pointer hover:opacity-80 flex items-center gap-1.5 bg-transparent border-0 p-0">
               <svg className="w-4 h-4 text-neutral-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9h18v6H3z"/><path d="M6 9v3M9 9v2M12 9v3M15 9v2M18 9v3"/></svg>
@@ -338,7 +368,7 @@ export default function ProductModal({
             </button>
           </div>
 
-          {/* 🔥 LIVE TRACKING DATA BOX */}
+          {/* LIVE TRACKING DATA BOX */}
           <div className="border border-neutral-300 rounded-2xs p-3 bg-white text-xs text-neutral-900 space-y-2.5 mb-5 max-w-md w-full font-normal">
             <div className="flex items-center gap-2">
               <span className="text-emerald-500 font-bold text-sm select-none">🗹</span>
@@ -355,7 +385,7 @@ export default function ProductModal({
             {!currentSizeToShow ? (
               <button
                 type="button"
-                className="w-full bg-black text-white font-medium text-sm py-3 rounded transition-colors"
+                className="w-full bg-black text-white font-medium text-sm py-3 rounded transition-colors cursor-pointer"
                 onClick={() => alert("Please select a size first!")}
               >
                 Select Size

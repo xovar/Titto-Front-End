@@ -4,6 +4,7 @@ import RootLayout from "../Layouts/RootLayout";
 import Men from "../Pages/Men/Men";
 import SingleProductDetail from "../Components/Shared/SingleProductDetail";
 import Checkout from "../Components/Shared/Checkout"; 
+import Cart from "../Components/Shared/Cart"; 
 //import NotFound from '../pages/NotFound';
 
 export const router = createBrowserRouter([
@@ -23,6 +24,10 @@ export const router = createBrowserRouter([
       {
         path: "/product/:id", 
         element: <SingleProductDetail />,
+      },
+      {
+        path: "/cart", 
+        element: <Cart />,
       },
       {
         path: "/checkout", 
