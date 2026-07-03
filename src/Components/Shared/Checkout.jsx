@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiHelpCircle, FiLock, FiChevronDown, FiChevronUp, FiShoppingBag } from "react-icons/fi";
+import { FiHelpCircle, FiLock, FiChevronDown, FiChevronUp, FiShoppingBag, FiCheck } from "react-icons/fi";
 
-// 📦 ১. ফিক্সড (Performance Optimization): 
-// OrderSummaryContent-কে মূল কম্পোনেন্টের বাইরে নিয়ে আসা হয়েছে যেন স্টেট চেঞ্জে ফোকাস ড্রপ না করে।
+// 📦 Order Summary Content Component
 const OrderSummaryContent = ({
   displayItems,
   couponCode,
@@ -11,7 +10,8 @@ const OrderSummaryContent = ({
   totalItemsCount,
   subtotal,
   vat,
-  total
+  total,
+  hideCoupon = false // কনফার্মেশন পেজে কুপন ইনপুট হাইড করার জন্য
 }) => (
   <>
     <div className="max-h-[350px] overflow-y-auto space-y-4 pt-2 pr-1">
@@ -29,10 +29,10 @@ const OrderSummaryContent = ({
               </span>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-tight line-clamp-2">
+              <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-tight line-clamp-2 text-left">
                 {item.name}
               </h4>
-              <p className="text-[10px] text-neutral-500 mt-1 font-medium">
+              <p className="text-[10px] text-neutral-500 mt-1 font-medium text-left">
                 Size: <span className="uppercase text-neutral-800 font-bold">{item.size || "N/A"}</span> | Color: <span className="capitalize text-neutral-800 font-bold">{item.color || "Default"}</span>
               </p>
             </div>
@@ -47,26 +47,29 @@ const OrderSummaryContent = ({
     <hr className="border-neutral-200" />
 
     {/* Coupon Code Input */}
-    <div className="flex gap-2">
-      <input
-        type="text"
-        placeholder="Discount code or gift card"
-        value={couponCode}
-        onChange={(e) => setCouponCode(e.target.value)}
-        className="flex-1 text-sm px-3 py-2.5 bg-white border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black placeholder-neutral-400"
-      />
-      <button
-        type="button"
-        className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-500 text-xs font-medium rounded-md transition-colors cursor-pointer"
-      >
-        Apply
-      </button>
-    </div>
-
-    <hr className="border-neutral-200" />
+    {!hideCoupon && (
+      <>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Discount code or gift card"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+            className="flex-1 text-sm px-3 py-2.5 bg-white border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black placeholder-neutral-400"
+          />
+          <button
+            type="button"
+            className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-500 text-xs font-medium rounded-md transition-colors cursor-pointer"
+          >
+            Apply
+          </button>
+        </div>
+        <hr className="border-neutral-200" />
+      </>
+    )}
 
     {/* Calculation Block */}
-    <div className="space-y-2.5 text-xs">
+    <div className="space-y-2.5 text-xs text-left">
       <div className="flex justify-between text-neutral-600">
         <span>Subtotal · {totalItemsCount} items</span>
         <span className="font-medium text-neutral-900">৳{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -81,10 +84,12 @@ const OrderSummaryContent = ({
         </span>
       </div>
 
-      <div className="text-[11px] text-neutral-500 flex items-center gap-1 font-medium select-none uppercase">
-        <span>🏷️</span>
-        <span>Enjoy Free Shipping</span>
-      </div>
+      {!hideCoupon && (
+        <div className="text-[11px] text-neutral-500 flex items-center gap-1 font-medium select-none uppercase">
+          <span>🏷️</span>
+          <span>Enjoy Free Shipping</span>
+        </div>
+      )}
 
       <div className="flex justify-between text-neutral-600">
         <span className="flex items-center gap-1">
@@ -97,7 +102,7 @@ const OrderSummaryContent = ({
     <hr className="border-neutral-200" />
 
     {/* Total */}
-    <div className="space-y-2">
+    <div className="space-y-2 text-left">
       <div className="flex justify-between items-baseline">
         <span className="text-sm font-bold text-neutral-900">Total</span>
         <div className="text-right flex items-baseline gap-1">
@@ -106,10 +111,12 @@ const OrderSummaryContent = ({
         </div>
       </div>
       
-      <div className="text-[11px] text-neutral-600 flex items-center gap-1 font-medium select-none uppercase">
-        <span>🏷️</span>
-        <span>Total Savings ৳৮০.০০</span>
-      </div>
+      {!hideCoupon && (
+        <div className="text-[11px] text-neutral-600 flex items-center gap-1 font-medium select-none uppercase">
+          <span>🏷️</span>
+          <span>Total Savings ৳৮০.০০</span>
+        </div>
+      )}
     </div>
   </>
 );
@@ -124,6 +131,7 @@ export default function Checkout() {
   const displayItems = cartItems.length > 0 ? cartItems : (singleItem ? [singleItem] : []);
 
   // 🎯 স্টেটস
+  const [isOrderConfirmed, setIsOrderConfirmed] = useState(false);
   const [isOrderSummaryOpen, setIsOrderSummaryOpen] = useState(false);
   const [shippingMethod, setShippingMethod] = useState("inside");
   const [paymentMethod, setPaymentMethod] = useState("sslcommerz");
@@ -131,7 +139,7 @@ export default function Checkout() {
   const [couponCode, setCouponCode] = useState("");
 
   const [formData, setFormData] = useState({
-    emailOrMobile: "",
+    emailOrMobile: "xovarfarhan@gmail.com",
     newsletter: false,
     country: "Bangladesh",
     firstName: "Md Al",
@@ -140,20 +148,16 @@ export default function Checkout() {
     notes: "",
     cityDistrict: "Dhaka",
     postalCode: "1344",
-    phone: "+880 1753 628855",
+    phone: "01753628655",
     saveInfo: false,
   });
 
   // 🛑 সেফটি গার্ড
-  if (displayItems.length === 0) {
+  if (displayItems.length === 0 && !isOrderConfirmed) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
         <h2 className="text-xl font-bold text-neutral-700">No item selected for checkout!</h2>
-        <p className="text-sm text-neutral-500">Please go back to the product page or cart to checkout.</p>
-        <button 
-          onClick={() => navigate("/")} 
-          className="bg-black hover:bg-neutral-900 text-white px-6 py-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
-        >
+        <button onClick={() => navigate("/")} className="bg-black text-white px-6 py-2.5 rounded-md text-sm font-medium">
           Go Shopping
         </button>
       </div>
@@ -169,35 +173,146 @@ export default function Checkout() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Checkout Final Data:", {
-      customerInfo: formData,
-      productInfo: displayItems,
-      shippingMethod,
-      paymentMethod,
-      billingAddress,
-      pricing: { subtotal, vat, total }
-    });
+    setIsOrderConfirmed(true);
   };
 
-  // 📦 চাইল্ড কম্পোনেন্টে পাঠানোর জন্য প্রপস অবজেক্ট তৈরি
   const summaryProps = {
-    displayItems,
-    couponCode,
-    setCouponCode,
-    totalItemsCount,
-    subtotal,
-    vat,
-    total
+    displayItems, couponCode, setCouponCode, totalItemsCount, subtotal, vat, total
   };
 
+  // Helper helper to get payment text for success screen
+  const getPaymentMethodText = () => {
+    if (paymentMethod === "cod") return "Cash On Delivery (ক্যাশ অন ডেলিভারি)";
+    if (paymentMethod === "sslcommerz") return "SSLCOMMERZ";
+    if (paymentMethod === "bkash") return "bKash (বিকাশ)";
+    if (paymentMethod === "nagad") return "Nagad (নগদ)";
+    return paymentMethod;
+  };
+
+  // =========================================================================
+  // 🎉 SCREEN 2: ORDER CONFIRMATION SCREEN (Screenshot 2026-07-02 122759.png)
+  // =========================================================================
+  if (isOrderConfirmed) {
+    return (
+      <div className="min-h-screen bg-white max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
+          
+          {/* LEFT COLUMN: Success Details */}
+          <div className="w-full lg:w-[55%] space-y-6 text-left">
+            
+            {/* Header / Thank You Message */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full border border-neutral-900 flex items-center justify-center shrink-0">
+                <FiCheck className="w-6 h-6 text-neutral-900" />
+              </div>
+              <div>
+                <p className="text-[11px] text-neutral-500 uppercase tracking-wider font-medium">Confirmation #NDZDUE0G8</p>
+                <h1 className="text-xl font-semibold text-neutral-900">Thank you, {formData.firstName}!</h1>
+              </div>
+            </div>
+
+            {/* Confirmation Box */}
+            <div className="border border-neutral-200 rounded-xl p-5 space-y-1 bg-white">
+              <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">Your order is confirmed</h3>
+              <p className="text-xs text-neutral-600">Your order has been successfully confirmed.</p>
+              <p className="text-xs text-neutral-400">-</p>
+              <p className="text-xs text-neutral-800 font-medium">আপনার অর্ডারটি সফলভাবে কনফার্ম হয়েছে।</p>
+            </div>
+
+            {/* Order Details Grid */}
+            <div className="border border-neutral-200 rounded-xl p-5">
+              <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-4">Order details</h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4 text-xs">
+                
+                {/* Contact Info */}
+                <div>
+                  <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Contact information</h4>
+                  <p className="text-neutral-800 font-medium">{formData.emailOrMobile}</p>
+                </div>
+
+                {/* Payment Method */}
+                <div>
+                  <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Payment method</h4>
+                  <p className="text-neutral-800 font-medium">
+                    {getPaymentMethodText()} · ৳{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BDT
+                  </p>
+                </div>
+
+                {/* Shipping Address */}
+                <div>
+                  <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Shipping address</h4>
+                  <div className="text-neutral-700 space-y-0.5 font-medium">
+                    <p>{formData.firstName} {formData.lastName}</p>
+                    <p>{formData.address}</p>
+                    <p>{formData.cityDistrict} {formData.postalCode}</p>
+                    <p>{formData.country}</p>
+                    <p>{formData.phone}</p>
+                  </div>
+                </div>
+
+                {/* Billing Address */}
+                <div>
+                  <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Billing address</h4>
+                  <div className="text-neutral-700 space-y-0.5 font-medium">
+                    {billingAddress === "same" ? (
+                      <>
+                        <p>{formData.firstName} {formData.lastName}</p>
+                        <p>{formData.address}</p>
+                        <p>{formData.cityDistrict} {formData.postalCode}</p>
+                        <p>{formData.country}</p>
+                        <p>{formData.phone}</p>
+                      </>
+                    ) : (
+                      <p>Different billing address</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Shipping Method */}
+                <div className="sm:col-span-2 border-t border-neutral-100 pt-4">
+                  <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Shipping method</h4>
+                  <p className="text-neutral-800 font-medium">
+                    {shippingMethod === "inside" ? "Inside Dhaka (ঢাকার ভিতরে)" : "Outside Dhaka (ঢাকার বাহিরে)"}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+              <p className="text-xs text-neutral-500">
+                Need help? <a href="#" className="underline text-neutral-700 hover:text-black">Contact us</a>
+              </p>
+              <button
+                onClick={() => navigate("/")}
+                className="w-full sm:w-auto bg-neutral-900 hover:bg-black text-white text-xs font-bold px-6 py-3.5 rounded-lg transition-colors uppercase tracking-wider"
+              >
+                Continue shopping
+              </button>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN: Desktop Order Summary */}
+          <div className="hidden lg:block w-full lg:w-[45%] bg-neutral-50 border border-neutral-200 rounded-2xl p-6 sticky top-6 space-y-6">
+            <OrderSummaryContent {...summaryProps} hideCoupon={true} />
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 📝 SCREEN 1: FULL REGULAR CHECKOUT FORM (সব ইনপুট ও পেমেন্ট মেথডসহ)
+  // =========================================================================
   return (
     <div className="min-h-screen bg-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-10">
       
@@ -243,7 +358,7 @@ export default function Checkout() {
               <input
                 type="text"
                 name="emailOrMobile"
-                placeholder="Mobile Number (মোবাইল নম্বর)"
+                placeholder="Email or Mobile Number"
                 value={formData.emailOrMobile}
                 onChange={handleInputChange}
                 className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black placeholder-neutral-400"
@@ -281,7 +396,7 @@ export default function Checkout() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[11px] font-medium text-neutral-500 mb-1">Optional Name</label>
+                <label className="block text-[11px] font-medium text-neutral-500 mb-1">First Name (Optional)</label>
                 <input
                   type="text"
                   name="firstName"
@@ -291,7 +406,7 @@ export default function Checkout() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-neutral-500 mb-1">Name (নাম)</label>
+                <label className="block text-[11px] font-medium text-neutral-500 mb-1">Last Name (নাম)</label>
                 <input
                   type="text"
                   name="lastName"
@@ -381,8 +496,6 @@ export default function Checkout() {
           {/* Shipping Method Section */}
           <div>
             <h2 className="text-lg font-medium text-neutral-900 mb-1">Shipping method</h2>
-            <p className="text-xs text-neutral-400 mb-3">Enter your shipping address to view shipping rates.</p>
-            
             <div className="border border-neutral-300 rounded-lg overflow-hidden">
               <label className={`flex items-center justify-between p-4 cursor-pointer border-b border-neutral-200 ${shippingMethod === "inside" ? "bg-neutral-50" : ""}`}>
                 <div className="flex items-center gap-3">
@@ -396,10 +509,7 @@ export default function Checkout() {
                   />
                   <span className="text-xs font-medium text-neutral-800">Inside Dhaka (ঢাকার ভিতরে)</span>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] line-through text-neutral-400 block">৳৬০.০০</span>
-                  <span className="text-xs font-bold text-neutral-900">FREE</span>
-                </div>
+                <span className="text-xs font-bold text-neutral-900">FREE</span>
               </label>
 
               <label className={`flex items-center justify-between p-4 cursor-pointer ${shippingMethod === "outside" ? "bg-neutral-50" : ""}`}>
@@ -414,10 +524,7 @@ export default function Checkout() {
                   />
                   <span className="text-xs font-medium text-neutral-600">Outside Dhaka (ঢাকার বাইরে)</span>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] line-through text-neutral-400 block">৳১২০.০০</span>
-                  <span className="text-xs font-bold text-neutral-900">FREE</span>
-                </div>
+                <span className="text-xs font-bold text-neutral-900">FREE</span>
               </label>
             </div>
           </div>
@@ -425,8 +532,6 @@ export default function Checkout() {
           {/* Payment Section */}
           <div>
             <h2 className="text-lg font-medium text-neutral-900 mb-1">Payment</h2>
-            <p className="text-xs text-neutral-400 mb-3">All transactions are secure and encrypted.</p>
-
             <div className="border border-neutral-300 rounded-lg overflow-hidden">
               <div>
                 <label className={`flex items-center justify-between p-4 cursor-pointer border-b border-neutral-200 ${paymentMethod === "sslcommerz" ? "bg-neutral-50" : ""}`}>
@@ -440,11 +545,6 @@ export default function Checkout() {
                       className="w-4 h-4 accent-black"
                     />
                     <span className="text-xs font-bold text-neutral-800">SSLCOMMERZ</span>
-                  </div>
-                  <div className="flex gap-1 text-xs text-neutral-400 select-none">
-                    <span className="bg-blue-600 text-white px-1 rounded font-bold text-[8px]">VISA</span>
-                    <span className="bg-red-500 text-white px-1 rounded font-bold text-[8px]">MC</span>
-                    <span className="bg-orange-500 text-white px-1 rounded font-bold text-[8px]">BKash</span>
                   </div>
                 </label>
                 {paymentMethod === "sslcommerz" && (
@@ -478,29 +578,33 @@ export default function Checkout() {
                 )}
               </div>
 
-              <label className={`flex items-center p-4 cursor-pointer border-b border-neutral-200 ${paymentMethod === "bkash" ? "bg-neutral-50" : ""}`}>
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="bkash"
-                  checked={paymentMethod === "bkash"}
-                  onChange={() => setPaymentMethod("bkash")}
-                  className="w-4 h-4 accent-black mr-3"
-                />
-                <span className="text-xs font-medium text-neutral-600">Bkash (বিকাশ)</span>
-              </label>
+              <div>
+                <label className={`flex items-center p-4 cursor-pointer border-b border-neutral-200 ${paymentMethod === "bkash" ? "bg-neutral-50" : ""}`}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="bkash"
+                    checked={paymentMethod === "bkash"}
+                    onChange={() => setPaymentMethod("bkash")}
+                    className="w-4 h-4 accent-black mr-3"
+                  />
+                  <span className="text-xs font-medium text-neutral-600">bKash (বিকাশ)</span>
+                </label>
+              </div>
 
-              <label className={`flex items-center p-4 cursor-pointer ${paymentMethod === "nagad" ? "bg-neutral-50" : ""}`}>
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="nagad"
-                  checked={paymentMethod === "nagad"}
-                  onChange={() => setPaymentMethod("nagad")}
-                  className="w-4 h-4 accent-black mr-3"
-                />
-                <span className="text-xs font-medium text-neutral-600">Nagad (নগদ)</span>
-              </label>
+              <div>
+                <label className={`flex items-center p-4 cursor-pointer ${paymentMethod === "nagad" ? "bg-neutral-50" : ""}`}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="nagad"
+                    checked={paymentMethod === "nagad"}
+                    onChange={() => setPaymentMethod("nagad")}
+                    className="w-4 h-4 accent-black mr-3"
+                  />
+                  <span className="text-xs font-medium text-neutral-600">Nagad (নগদ)</span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -535,20 +639,13 @@ export default function Checkout() {
 
           <button
             type="submit"
-            className="w-full bg-black hover:bg-neutral-900 text-white text-sm font-semibold py-4 rounded-md transition-all tracking-wide cursor-pointer shadow-xs uppercase"
+            className="w-full bg-black hover:bg-neutral-900 text-white text-sm font-semibold py-4 rounded-md transition-all uppercase tracking-wide cursor-pointer"
           >
             Complete order
           </button>
-
-          <div className="flex flex-wrap gap-4 pt-4 border-t border-neutral-200 text-[10px] text-neutral-500">
-            <a href="#" className="underline hover:text-black">Refund policy</a>
-            <a href="#" className="underline hover:text-black">Privacy policy</a>
-            <a href="#" className="underline hover:text-black">Terms of service</a>
-            <a href="#" className="underline hover:text-black">Contact information</a>
-          </div>
         </div>
 
-        {/* 📦 DESKTOP COLUMN: Order Summary */}
+        {/* DESKTOP COLUMN: Order Summary */}
         <div className="hidden lg:block w-full lg:w-[45%] bg-neutral-50 border border-neutral-200 rounded-2xl p-6 lg:sticky lg:top-6 space-y-6 text-left">
           <OrderSummaryContent {...summaryProps} />
         </div>
