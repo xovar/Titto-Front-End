@@ -9,6 +9,7 @@ import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import { toast } from "react-toastify";
 
 export default function ProductModal({ 
   product, 
@@ -105,10 +106,10 @@ export default function ProductModal({
 
   // 🚀 রেডাক্সের সাথে কার্ট অ্যাকশন হ্যান্ডলার
   const handleAction = (actionType) => {
-    if (!currentSizeToShow) {
-      alert("Please select a size first!");
-      return;
-    }
+  if (!currentSizeToShow) {
+    toast.error("Please select a size first!");
+    return;
+  }
 
     // রেডাক্স স্টোরে পাঠানোর জন্য প্রোডাক্ট অবজেক্ট তৈরি
     const itemToDispatch = {
@@ -139,10 +140,6 @@ export default function ProductModal({
     if (actionType === "buy_now") {
       onClose(); // মোডাল বন্ধ হবে
       navigate("/cart"); // সরাসরি কার্ট পেজে নিয়ে যাবে
-    } else {
-      // শুধু 'Add to cart' হলে একটি কনফার্মেশন অ্যালার্ট দিয়ে মোডাল বন্ধ করে দিবে
-      alert("Product added to cart successfully! 🛒");
-      onClose();
     }
   };
 
@@ -386,7 +383,7 @@ export default function ProductModal({
               <button
                 type="button"
                 className="w-full bg-black text-white font-medium text-sm py-3 rounded transition-colors cursor-pointer"
-                onClick={() => alert("Please select a size first!")}
+                onClick={() => toast.error("Please select a size first!")}
               >
                 Select Size
               </button>

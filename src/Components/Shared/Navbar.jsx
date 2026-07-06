@@ -1,12 +1,19 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+
 import logo from "../../assets/titto.logo.png";
 import { FaRegHeart, FaBars, FaTimes } from "react-icons/fa";
 import { MdOutlineShoppingCart, MdOutlinePerson } from "react-icons/md";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // Controls the mobile menu
+  const navigate = useNavigate();
+
+  const { cartItems } = useSelector((state) => state.cart);
+
+  const cartCount = cartItems.length;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,18 +28,14 @@ function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 1. Cleanly handles all text colors without string interpolation bugs
   const getLinkClassName = ({ isActive }) => {
-    const baseClass = "block lg:inline-block font-extrabold uppercase transition-colors duration-300 py-4 lg:py-0 lg:mr-5 text-xl lg:text-base";
-    
+    const baseClass =
+      "block lg:inline-block font-extrabold uppercase transition-colors duration-300 py-4 lg:py-0 lg:mr-5 text-xl lg:text-base";
     if (isActive) return `${baseClass} text-red-500`;
-    
-    // If mobile menu is open OR page is scrolled, text must be white. Otherwise, black.
-    return `${baseClass} hover:text-red-500 ${isScrolled || isOpen ? 'text-white' : 'text-black'}`;
+    return `${baseClass} hover:text-red-500 ${isScrolled || isOpen ? "text-white" : "text-black"}`;
   };
 
-  // 2. Icon colors helper
-  const iconClass = `cursor-pointer hover:text-red-500 transition-colors ${isScrolled ? 'text-white' : 'text-black'}`;
+  const iconClass = `cursor-pointer hover:text-red-500 transition-colors ${isScrolled ? "text-white" : "text-black"}`;
 
   return (
     <div
@@ -51,34 +54,82 @@ function Navbar() {
         <img src={logo} width="100px" alt="Titto Logo" />
       </div>
 
-      {/* Navigation Links (Desktop Row & Mobile Overlay) */}
-      <div 
+      {/* Navigation Links */}
+      <div
         className={`absolute lg:static top-20 lg:top-auto left-0 w-full lg:w-auto bg-black lg:bg-transparent flex-col lg:flex-row items-center justify-center transition-all duration-300 ease-in-out z-40 
         ${isOpen ? "flex h-screen pb-20 opacity-100" : "hidden lg:flex lg:h-auto opacity-0 lg:opacity-100"}`}
       >
         <nav className="flex flex-col lg:flex-row text-center w-full">
-          {/* onClick closes the menu when a link is clicked on mobile */}
-          <NavLink className={getLinkClassName} to="/" onClick={() => setIsOpen(false)}>Home</NavLink>
-          <NavLink className={getLinkClassName} to="/men" onClick={() => setIsOpen(false)}>Men</NavLink>
-          <NavLink className={getLinkClassName} to="/women" onClick={() => setIsOpen(false)}>Women</NavLink>
-          <NavLink className={getLinkClassName} to="/products" onClick={() => setIsOpen(false)}>Products</NavLink>
-          <NavLink className={getLinkClassName} to="/contact" onClick={() => setIsOpen(false)}>Contact Us</NavLink>
+          <NavLink
+            className={getLinkClassName}
+            to="/"
+            onClick={() => setIsOpen(false)}
+          >
+            Home
+          </NavLink>
+          <NavLink
+            className={getLinkClassName}
+            to="/men"
+            onClick={() => setIsOpen(false)}
+          >
+            Men
+          </NavLink>
+          <NavLink
+            className={getLinkClassName}
+            to="/women"
+            onClick={() => setIsOpen(false)}
+          >
+            Women
+          </NavLink>
+          <NavLink
+            className={getLinkClassName}
+            to="/products"
+            onClick={() => setIsOpen(false)}
+          >
+            Products
+          </NavLink>
+          <NavLink
+            className={getLinkClassName}
+            to="/contact"
+            onClick={() => setIsOpen(false)}
+          >
+            Contact Us
+          </NavLink>
         </nav>
       </div>
 
-      {/* Right Actions Wrapper (Icons & Hamburger Menu) */}
+      {/* Right Actions Wrapper */}
       <div className="flex items-center gap-5 text-xl z-50">
-        {/* Utility Icons */}
         <FaRegHeart className={iconClass} />
-        <MdOutlineShoppingCart className={iconClass} />
-        <MdOutlinePerson className={`hidden sm:block ${iconClass}`} /> {/* Hides person icon on very small screens to save space */}
 
-        {/* Hamburger Toggle Button (Mobile Only) */}
-        <button 
-          onClick={() => setIsOpen(!isOpen)} 
+        {/* 🛠️ DaisyUI Badge Component Added Here */}
+        <div
+          className="indicator flex items-center justify-center"
+          onClick={() => navigate("/cart")}
+        >
+          {cartCount > 0 && (
+            <span className="indicator-item badge bg-red-500 text-white font-black text-[10px] scale-90 px-1.5 h-4 min-h-4 border-none select-none">
+              {cartCount}
+            </span>
+          )}
+          <MdOutlineShoppingCart className={iconClass} />
+        </div>
+
+        <MdOutlinePerson className={`hidden sm:block ${iconClass}`} />
+
+        {/* Hamburger Toggle Button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
           className={`lg:hidden focus:outline-none transition-colors ml-2 ${isScrolled || isOpen ? "text-white" : "text-black"}`}
         >
-          {isOpen ? <FaTimes size={26} className={`${isScrolled ? 'text-white' : 'text-black'}`} /> : <FaBars size={26} />}
+          {isOpen ? (
+            <FaTimes
+              size={26}
+              className={`${isScrolled ? "text-white" : "text-black"}`}
+            />
+          ) : (
+            <FaBars size={26} />
+          )}
         </button>
       </div>
     </div>
