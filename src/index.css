@@ -43,3 +43,11 @@
   border-radius: calc(12px - 2px); /* Adjusts radius to fit perfectly inside */
   z-index: -1;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}

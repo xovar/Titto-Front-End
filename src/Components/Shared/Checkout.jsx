@@ -1,125 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiHelpCircle, FiLock, FiChevronDown, FiChevronUp, FiShoppingBag, FiCheck } from "react-icons/fi";
-
-// 📦 Order Summary Content Component
-const OrderSummaryContent = ({
-  displayItems,
-  couponCode,
-  setCouponCode,
-  totalItemsCount,
-  subtotal,
-  vat,
-  total,
-  hideCoupon = false // কনফার্মেশন পেজে কুপন ইনপুট হাইড করার জন্য
-}) => (
-  <>
-    <div className="max-h-[350px] overflow-y-auto space-y-4 pt-2 pr-1">
-      {displayItems.map((item) => (
-        <div key={item.uniqueCartId || item.id} className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-white border border-neutral-200 rounded-xl relative p-1 shrink-0 flex items-center justify-center">
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-full object-contain mix-blend-multiply"
-              />
-              <span className="absolute -top-2 -right-2 bg-black text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-xs">
-                {item.quantity}
-              </span>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-tight line-clamp-2 text-left">
-                {item.name}
-              </h4>
-              <p className="text-[10px] text-neutral-500 mt-1 font-medium text-left">
-                Size: <span className="uppercase text-neutral-800 font-bold">{item.size || "N/A"}</span> | Color: <span className="capitalize text-neutral-800 font-bold">{item.color || "Default"}</span>
-              </p>
-            </div>
-          </div>
-          <span className="text-xs font-semibold text-neutral-900 shrink-0">
-            ৳{(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
-        </div>
-      ))}
-    </div>
-
-    <hr className="border-neutral-200" />
-
-    {/* Coupon Code Input */}
-    {!hideCoupon && (
-      <>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Discount code or gift card"
-            value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
-            className="flex-1 text-sm px-3 py-2.5 bg-white border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black placeholder-neutral-400"
-          />
-          <button
-            type="button"
-            className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-500 text-xs font-medium rounded-md transition-colors cursor-pointer"
-          >
-            Apply
-          </button>
-        </div>
-        <hr className="border-neutral-200" />
-      </>
-    )}
-
-    {/* Calculation Block */}
-    <div className="space-y-2.5 text-xs text-left">
-      <div className="flex justify-between text-neutral-600">
-        <span>Subtotal · {totalItemsCount} items</span>
-        <span className="font-medium text-neutral-900">৳{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-      </div>
-      
-      <div className="flex justify-between text-neutral-600 items-center">
-        <span className="flex items-center gap-1.5">
-          Shipping <span className="text-neutral-400 cursor-help" title="Free Shipping Promotion">ⓘ</span>
-        </span>
-        <span className="text-neutral-900 font-medium">
-          <span className="line-through mr-1 text-neutral-400">৳৮০.০০</span> FREE
-        </span>
-      </div>
-
-      {!hideCoupon && (
-        <div className="text-[11px] text-neutral-500 flex items-center gap-1 font-medium select-none uppercase">
-          <span>🏷️</span>
-          <span>Enjoy Free Shipping</span>
-        </div>
-      )}
-
-      <div className="flex justify-between text-neutral-600">
-        <span className="flex items-center gap-1">
-          VAT <span className="text-neutral-400 cursor-help" title="Value Added Tax">ⓘ</span>
-        </span>
-        <span className="font-medium text-neutral-900">৳{vat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-      </div>
-    </div>
-
-    <hr className="border-neutral-200" />
-
-    {/* Total */}
-    <div className="space-y-2 text-left">
-      <div className="flex justify-between items-baseline">
-        <span className="text-sm font-bold text-neutral-900">Total</span>
-        <div className="text-right flex items-baseline gap-1">
-          <span className="text-[10px] text-neutral-400 font-medium">BDT</span>
-          <span className="text-xl font-bold text-neutral-900">৳{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-        </div>
-      </div>
-      
-      {!hideCoupon && (
-        <div className="text-[11px] text-neutral-600 flex items-center gap-1 font-medium select-none uppercase">
-          <span>🏷️</span>
-          <span>Total Savings ৳৮০.০০</span>
-        </div>
-      )}
-    </div>
-  </>
-);
+import OrderSummaryContent from "./OrderSummaryContent";
 
 export default function Checkout() {
   const location = useLocation();
@@ -139,17 +21,26 @@ export default function Checkout() {
   const [couponCode, setCouponCode] = useState("");
 
   const [formData, setFormData] = useState({
-    emailOrMobile: "xovarfarhan@gmail.com",
+    emailOrMobile: "",
     newsletter: false,
-    country: "Bangladesh",
-    firstName: "Md Al",
-    lastName: "Farhan",
-    address: "Asulia Savar",
+    country: "",
+    firstName: "",
+    lastName: "",
+    address: "",
     notes: "",
-    cityDistrict: "Dhaka",
-    postalCode: "1344",
-    phone: "01753628655",
+    cityDistrict: "",
+    postalCode: "",
+    phone: "",
     saveInfo: false,
+    // বিলিং অ্যাড্রেসের ফিল্ডসমূহ
+    billingCountry: "Bangladesh",
+    billingFirstName: "",
+    billingLastName: "",
+    billingAddressInput: "",
+    billingNotes: "",
+    billingCity: "",
+    billingPostalCode: "",
+    billingPhone: "",
   });
 
   // 🛑 সেফটি গার্ড
@@ -185,7 +76,6 @@ export default function Checkout() {
     displayItems, couponCode, setCouponCode, totalItemsCount, subtotal, vat, total
   };
 
-  // Helper helper to get payment text for success screen
   const getPaymentMethodText = () => {
     if (paymentMethod === "cod") return "Cash On Delivery (ক্যাশ অন ডেলিভারি)";
     if (paymentMethod === "sslcommerz") return "SSLCOMMERZ";
@@ -195,7 +85,7 @@ export default function Checkout() {
   };
 
   // =========================================================================
-  // 🎉 SCREEN 2: ORDER CONFIRMATION SCREEN (Screenshot 2026-07-02 122759.png)
+  // 🎉 SCREEN 2: ORDER CONFIRMATION SCREEN
   // =========================================================================
   if (isOrderConfirmed) {
     return (
@@ -205,7 +95,6 @@ export default function Checkout() {
           {/* LEFT COLUMN: Success Details */}
           <div className="w-full lg:w-[55%] space-y-6 text-left">
             
-            {/* Header / Thank You Message */}
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full border border-neutral-900 flex items-center justify-center shrink-0">
                 <FiCheck className="w-6 h-6 text-neutral-900" />
@@ -216,27 +105,23 @@ export default function Checkout() {
               </div>
             </div>
 
-            {/* Confirmation Box */}
             <div className="border border-neutral-200 rounded-xl p-5 space-y-1 bg-white">
               <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">Your order is confirmed</h3>
               <p className="text-xs text-neutral-600">Your order has been successfully confirmed.</p>
               <p className="text-xs text-neutral-400">-</p>
-              <p className="text-xs text-neutral-800 font-medium">আপনার অর্ডারটি সফলভাবে কনফার্ম হয়েছে।</p>
+              <p className="text-xs text-neutral-800 font-medium">আপনার অর্ডারটি সফলভাবে কনফার্ম হয়েছে।</p>
             </div>
 
-            {/* Order Details Grid */}
             <div className="border border-neutral-200 rounded-xl p-5">
               <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-4">Order details</h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4 text-xs">
                 
-                {/* Contact Info */}
                 <div>
                   <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Contact information</h4>
                   <p className="text-neutral-800 font-medium">{formData.emailOrMobile}</p>
                 </div>
 
-                {/* Payment Method */}
                 <div>
                   <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Payment method</h4>
                   <p className="text-neutral-800 font-medium">
@@ -244,7 +129,6 @@ export default function Checkout() {
                   </p>
                 </div>
 
-                {/* Shipping Address */}
                 <div>
                   <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Shipping address</h4>
                   <div className="text-neutral-700 space-y-0.5 font-medium">
@@ -256,7 +140,6 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                {/* Billing Address */}
                 <div>
                   <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Billing address</h4>
                   <div className="text-neutral-700 space-y-0.5 font-medium">
@@ -269,30 +152,34 @@ export default function Checkout() {
                         <p>{formData.phone}</p>
                       </>
                     ) : (
-                      <p>Different billing address</p>
+                      <>
+                        <p>{formData.billingFirstName} {formData.billingLastName}</p>
+                        <p>{formData.billingAddressInput}</p>
+                        <p>{formData.billingCity} {formData.billingPostalCode}</p>
+                        <p>{formData.billingCountry}</p>
+                        {formData.billingPhone && <p>{formData.billingPhone}</p>}
+                      </>
                     )}
                   </div>
                 </div>
 
-                {/* Shipping Method */}
                 <div className="sm:col-span-2 border-t border-neutral-100 pt-4">
                   <h4 className="font-semibold text-neutral-400 mb-1 uppercase tracking-tight">Shipping method</h4>
                   <p className="text-neutral-800 font-medium">
-                    {shippingMethod === "inside" ? "Inside Dhaka (ঢাকার ভিতরে)" : "Outside Dhaka (ঢাকার বাহিরে)"}
+                    {shippingMethod === "inside" ? "Inside Dhaka (ঢাকার ভিতরে)" : "Outside Dhaka (ঢাকার বাইরে)"}
                   </p>
                 </div>
 
               </div>
             </div>
 
-            {/* Footer Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
               <p className="text-xs text-neutral-500">
                 Need help? <a href="#" className="underline text-neutral-700 hover:text-black">Contact us</a>
               </p>
               <button
                 onClick={() => navigate("/")}
-                className="w-full sm:w-auto bg-neutral-900 hover:bg-black text-white text-xs font-bold px-6 py-3.5 rounded-lg transition-colors uppercase tracking-wider"
+                className="w-full sm:w-auto bg-neutral-900 hover:bg-black text-white text-xs font-bold px-6 py-3.5 rounded-lg transition-colors uppercase tracking-wider cursor-pointer"
               >
                 Continue shopping
               </button>
@@ -300,7 +187,6 @@ export default function Checkout() {
 
           </div>
 
-          {/* RIGHT COLUMN: Desktop Order Summary */}
           <div className="hidden lg:block w-full lg:w-[45%] bg-neutral-50 border border-neutral-200 rounded-2xl p-6 sticky top-6 space-y-6">
             <OrderSummaryContent {...summaryProps} hideCoupon={true} />
           </div>
@@ -311,18 +197,16 @@ export default function Checkout() {
   }
 
   // =========================================================================
-  // 📝 SCREEN 1: FULL REGULAR CHECKOUT FORM (সব ইনপুট ও পেমেন্ট মেথডসহ)
+  // 📝 SCREEN 1: FULL REGULAR CHECKOUT FORM
   // =========================================================================
   return (
     <div className="min-h-screen bg-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-10">
       
-      {/* 📱 Mobile Logo Header */}
       <div className="flex justify-between items-center pb-4 border-b border-neutral-200 lg:hidden mb-4">
         <div className="font-black tracking-wider text-xl">BRAND LOGO</div>
         <FiShoppingBag className="w-5 h-5 text-neutral-700" />
       </div>
 
-      {/* 📱 Mobile Accordion Dropdown Bar */}
       <div className="lg:hidden w-full bg-neutral-50 border border-neutral-200 rounded-xl mb-6 overflow-hidden">
         <button
           type="button"
@@ -361,10 +245,10 @@ export default function Checkout() {
                 placeholder="Email or Mobile Number"
                 value={formData.emailOrMobile}
                 onChange={handleInputChange}
-                className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black placeholder-neutral-400"
+                className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black placeholder-neutral-400 caret-black relative z-10 bg-transparent"
                 required
               />
-              <FiHelpCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
+              <FiHelpCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4 z-0 pointer-events-none" />
             </div>
             <label className="flex items-center gap-2 mt-3 cursor-pointer select-none">
               <input
@@ -372,7 +256,7 @@ export default function Checkout() {
                 name="newsletter"
                 checked={formData.newsletter}
                 onChange={handleInputChange}
-                className="w-4 h-4 accent-black rounded border-neutral-300"
+                className="w-4 h-4 accent-black rounded border-neutral-300 cursor-pointer"
               />
               <span className="text-xs text-neutral-600">Email me with news and offers</span>
             </label>
@@ -388,7 +272,7 @@ export default function Checkout() {
                 name="country"
                 value={formData.country}
                 onChange={handleInputChange}
-                className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md bg-neutral-50 focus:outline-none focus:ring-1 focus:ring-black"
+                className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md bg-neutral-50 focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
               >
                 <option value="Bangladesh">Bangladesh</option>
               </select>
@@ -402,7 +286,7 @@ export default function Checkout() {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black caret-black"
                 />
               </div>
               <div>
@@ -412,7 +296,7 @@ export default function Checkout() {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black caret-black"
                   required
                 />
               </div>
@@ -425,7 +309,7 @@ export default function Checkout() {
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
-                className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black caret-black"
                 required
               />
             </div>
@@ -436,7 +320,7 @@ export default function Checkout() {
               placeholder="Special notes for delivery (optional)"
               value={formData.notes}
               onChange={handleInputChange}
-              className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black placeholder-neutral-400"
+              className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black placeholder-neutral-400 caret-black"
             />
 
             <div className="grid grid-cols-2 gap-4">
@@ -447,7 +331,7 @@ export default function Checkout() {
                   name="cityDistrict"
                   value={formData.cityDistrict}
                   onChange={handleInputChange}
-                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black caret-black"
                   required
                 />
               </div>
@@ -458,7 +342,7 @@ export default function Checkout() {
                   name="postalCode"
                   value={formData.postalCode}
                   onChange={handleInputChange}
-                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black caret-black"
                 />
               </div>
             </div>
@@ -471,13 +355,13 @@ export default function Checkout() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black pl-12"
+                  className="w-full text-sm px-4 py-3 border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black pl-12 caret-black relative z-10 bg-transparent"
                   required
                 />
-                <div className="absolute left-3 flex items-center gap-1 text-sm text-neutral-500 select-none">
+                <div className="absolute left-3 flex items-center gap-1 text-sm text-neutral-500 select-none z-0 pointer-events-none">
                   <span className="text-base">🇧🇩</span>
                 </div>
-                <FiHelpCircle className="absolute right-3 text-neutral-400 w-4 h-4" />
+                <FiHelpCircle className="absolute right-3 text-neutral-400 w-4 h-4 z-0 pointer-events-none" />
               </div>
             </div>
 
@@ -487,7 +371,7 @@ export default function Checkout() {
                 name="saveInfo"
                 checked={formData.saveInfo}
                 onChange={handleInputChange}
-                className="w-4 h-4 accent-black rounded border-neutral-300"
+                className="w-4 h-4 accent-black rounded border-neutral-300 cursor-pointer"
               />
               <span className="text-xs text-neutral-600">Save this information for next time</span>
             </label>
@@ -505,7 +389,7 @@ export default function Checkout() {
                     value="inside"
                     checked={shippingMethod === "inside"}
                     onChange={() => setShippingMethod("inside")}
-                    className="w-4 h-4 accent-black"
+                    className="w-4 h-4 accent-black cursor-pointer"
                   />
                   <span className="text-xs font-medium text-neutral-800">Inside Dhaka (ঢাকার ভিতরে)</span>
                 </div>
@@ -520,7 +404,7 @@ export default function Checkout() {
                     value="outside"
                     checked={shippingMethod === "outside"}
                     onChange={() => setShippingMethod("outside")}
-                    className="w-4 h-4 accent-black"
+                    className="w-4 h-4 accent-black cursor-pointer"
                   />
                   <span className="text-xs font-medium text-neutral-600">Outside Dhaka (ঢাকার বাইরে)</span>
                 </div>
@@ -542,7 +426,7 @@ export default function Checkout() {
                       value="sslcommerz"
                       checked={paymentMethod === "sslcommerz"}
                       onChange={() => setPaymentMethod("sslcommerz")}
-                      className="w-4 h-4 accent-black"
+                      className="w-4 h-4 accent-black cursor-pointer"
                     />
                     <span className="text-xs font-bold text-neutral-800">SSLCOMMERZ</span>
                   </div>
@@ -565,7 +449,7 @@ export default function Checkout() {
                     value="cod"
                     checked={paymentMethod === "cod"}
                     onChange={() => setPaymentMethod("cod")}
-                    className="w-4 h-4 accent-black mr-3"
+                    className="w-4 h-4 accent-black mr-3 cursor-pointer"
                   />
                   <span className="text-xs font-medium text-neutral-600">Cash On Delivery (ক্যাশ অন ডেলিভারি)</span>
                 </label>
@@ -586,7 +470,7 @@ export default function Checkout() {
                     value="bkash"
                     checked={paymentMethod === "bkash"}
                     onChange={() => setPaymentMethod("bkash")}
-                    className="w-4 h-4 accent-black mr-3"
+                    className="w-4 h-4 accent-black mr-3 cursor-pointer"
                   />
                   <span className="text-xs font-medium text-neutral-600">bKash (বিকাশ)</span>
                 </label>
@@ -600,7 +484,7 @@ export default function Checkout() {
                     value="nagad"
                     checked={paymentMethod === "nagad"}
                     onChange={() => setPaymentMethod("nagad")}
-                    className="w-4 h-4 accent-black mr-3"
+                    className="w-4 h-4 accent-black mr-3 cursor-pointer"
                   />
                   <span className="text-xs font-medium text-neutral-600">Nagad (নগদ)</span>
                 </label>
@@ -611,29 +495,145 @@ export default function Checkout() {
           {/* Billing Address Section */}
           <div>
             <h2 className="text-lg font-medium text-neutral-900 mb-3">Billing address</h2>
-            <div className="border border-neutral-300 rounded-lg overflow-hidden">
-              <label className={`flex items-center p-4 cursor-pointer border-b border-neutral-200 ${billingAddress === "same" ? "bg-neutral-50" : ""}`}>
+            <div className="border border-neutral-300 rounded-lg overflow-hidden bg-white">
+              
+              <label className={`flex items-center p-4 cursor-pointer border-b border-neutral-200 transition-colors ${billingAddress === "same" ? "bg-neutral-50" : ""}`}>
                 <input
                   type="radio"
                   name="billingAddress"
                   value="same"
                   checked={billingAddress === "same"}
                   onChange={() => setBillingAddress("same")}
-                  className="w-4 h-4 accent-black mr-3"
+                  className="w-4 h-4 accent-black mr-3 cursor-pointer"
                 />
-                <span className="text-xs font-medium text-neutral-800">Same as shipping address</span>
+                <span className="text-sm font-medium text-neutral-800">Same as shipping address</span>
               </label>
-              <label className={`flex items-center p-4 cursor-pointer ${billingAddress === "different" ? "bg-neutral-50" : ""}`}>
+
+              <label className={`flex items-center p-4 cursor-pointer transition-colors ${billingAddress === "different" ? "bg-neutral-50 border-b border-neutral-300" : ""}`}>
                 <input
                   type="radio"
                   name="billingAddress"
                   value="different"
                   checked={billingAddress === "different"}
                   onChange={() => setBillingAddress("different")}
-                  className="w-4 h-4 accent-black mr-3"
+                  className="w-4 h-4 accent-black mr-3 cursor-pointer"
                 />
-                <span className="text-xs font-medium text-neutral-600">Use a different billing address</span>
+                <span className="text-sm font-medium text-neutral-800">Use a different billing address</span>
               </label>
+
+              {billingAddress === "different" && (
+                <div className="p-4 bg-neutral-50/50 border-t border-neutral-200 space-y-4">
+                  
+                  <div>
+                    <label className="block text-[11px] font-medium text-neutral-500 mb-1">Country/Region</label>
+                    <div className="relative">
+                      <select
+                        name="billingCountry"
+                        value={formData.billingCountry}
+                        onChange={handleInputChange}
+                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg appearance-none focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                      >
+                        <option value="Bangladesh">Bangladesh</option>
+                      </select>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">▼</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-medium text-neutral-500 mb-1">Optional Name</label>
+                      <input
+                        type="text"
+                        name="billingFirstName"
+                        placeholder="Md Al"
+                        value={formData.billingFirstName}
+                        onChange={handleInputChange}
+                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black caret-black"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-neutral-500 mb-1">Name (নাম)</label>
+                      <input
+                        type="text"
+                        name="billingLastName"
+                        placeholder="Farhan"
+                        value={formData.billingLastName}
+                        onChange={handleInputChange}
+                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black caret-black"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-neutral-500 mb-1">Address (ঠিকানা)</label>
+                    <input
+                      type="text"
+                      name="billingAddressInput"
+                      placeholder="Asulia Savar"
+                      value={formData.billingAddressInput}
+                      onChange={handleInputChange}
+                      className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black caret-black"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      name="billingNotes"
+                      placeholder="Special notes for delivery (optional)"
+                      value={formData.billingNotes}
+                      onChange={handleInputChange}
+                      className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black placeholder-neutral-400 caret-black"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-medium text-neutral-500 mb-1">City/District (শহর/জেলা)</label>
+                      <input
+                        type="text"
+                        name="billingCity"
+                        placeholder="Dhaka"
+                        value={formData.billingCity}
+                        onChange={handleInputChange}
+                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black caret-black"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-neutral-500 mb-1">Postal code (optional)</label>
+                      <input
+                        type="text"
+                        name="billingPostalCode"
+                        placeholder="1344"
+                        value={formData.billingPostalCode}
+                        onChange={handleInputChange}
+                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black caret-black"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-neutral-500 mb-1">Phone (optional)</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        name="billingPhone"
+                        placeholder="01753628655"
+                        value={formData.billingPhone}
+                        onChange={handleInputChange}
+                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black pl-4 pr-16 caret-black relative z-10 bg-transparent"
+                      />
+                      <div className="absolute right-4 flex items-center gap-2 text-neutral-400 select-none z-0 pointer-events-none">
+                        <span className="text-xl">🇧🇩</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
             </div>
           </div>
 
