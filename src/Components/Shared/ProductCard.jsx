@@ -62,6 +62,18 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       : availableSizes[0];
   }, [selectedSize, availableSizes]);
 
+  // 🔍 ৪. সিলেক্টেড কালার এবং সাইজের লাইভ স্টক হিসাব করা
+  const currentStock = useMemo(() => {
+    if (!activeVariant || !activeVariant.sizes) return 0;
+    
+    // একটিভ ভ্যারিয়েন্টের ভেতর থেকে ইউজারের সিলেক্ট করা সাইজ অবজেক্টটি খোঁজা হচ্ছে
+    const sizeObj = activeVariant.sizes.find(
+      (s) => s.size === currentSizeToShow
+    );
+    
+    return sizeObj ? sizeObj.stock : 0;
+  }, [activeVariant, currentSizeToShow]);
+
   const handleSizeClick = (sizeValue) => {
     setSelectedSize(sizeValue);
   };
@@ -90,13 +102,12 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       id: product.id,
       name: product.name,
       image: activeVariant?.images?.[0] || product.images?.[0] || displayImages[0],
-      price: modalData.finalPrice / modalData.quantity, // Checkout পেজের গুণফলের সুবিধার জন্য একক মূল্য বের করা হলো
+      price: modalData.finalPrice / modalData.quantity,
       quantity: modalData.quantity,
       size: modalData.size,
       color: modalData.color,
     };
 
-    // 🚀 অ্যাকশন যদি 'buy_now' হয়, সরাসরি Checkout পেজে ডেটা সহ রিডাইরেক্ট করবে
     if (modalData.action === "buy_now") {
       setIsModalOpen(false);
       navigate("/checkout", { 
@@ -105,7 +116,6 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       return; 
     }
 
-    // 🛒 সাধারণ 'cart' অ্যাকশন হলে নিচের লজিক কাজ করবে
     console.log("Added to cart payload submission:", {
       ...product,
       quantity: modalData.quantity,
@@ -149,22 +159,31 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           isList ? "flex-row items-center gap-6 w-full" : "flex-col h-full"
         }`}
       >
+        {/* Discount Badge */}
         {product.discount && (
           <div className="absolute top-4 left-4 bg-[#ea4c3b] text-white text-[10px] font-bold px-2 py-1 rounded z-10">
             -{product.discount}%
           </div>
         )}
 
+        {/* Sold Out Tag */}
+        {currentStock === 0 && (
+          <div className="absolute top-4 right-4 bg-black text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded z-10 border border-neutral-800 select-none">
+            Sold Out
+          </div>
+        )}
+
         {/* Hover Action Buttons */}
         <div className="absolute w-full rounded-2xl h-83.75 bg-black/60 flex justify-center items-end pb-5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-20">
           <button
-            className="btn btn-wide cursor-pointer"
+            className={`btn btn-wide cursor-pointer ${currentStock === 0 ? "btn-disabled bg-neutral-800 text-neutral-500 border-none" : ""}`}
+            disabled={currentStock === 0}
             onClick={(e) => {
-              e.stopPropagation(); // কার্ড ক্লিকের ইভেন্টকে থামাবে
-              setIsModalOpen(true);
+              e.stopPropagation(); 
+              if (currentStock > 0) setIsModalOpen(true);
             }}
           >
-            Quick View
+            {currentStock > 0 ? "Quick View" : "Out of Stock"}
           </button>
         </div>
 
@@ -233,7 +252,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                     type="button"
                     title={colorObj.name}
                     onClick={(e) => {
-                      e.stopPropagation(); // কার্ড ক্লিকের ইভেন্টকে থামাবে
+                      e.stopPropagation(); 
                       setSelectedColor(colorObj.name);
                     }}
                     style={{ backgroundColor: colorObj.code }}
@@ -249,7 +268,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           </div>
 
           {/* SIZES SELECTOR */}
-          <div className="bg-white flex items-center gap-2 mb-3 w-full">
+          <div className="bg-white flex items-center gap-2 mb-2 w-full">
             <span className="text-xs font-bold text-neutral-500 min-w-11.25">
               Sizes:
             </span>
@@ -261,7 +280,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                     key={sizeValue}
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation(); // কার্ড ক্লিকের ইভেন্টকে থামাবে
+                      e.stopPropagation(); 
                       handleSizeClick(sizeValue);
                     }}
                     className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors cursor-pointer ${
@@ -277,6 +296,22 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             </div>
           </div>
 
+          {/* 📦 LIVE STOCK STATUS INDICATOR */}
+          <div className="mb-3 w-full">
+            {currentStock > 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-green-600 uppercase tracking-wider select-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                In Stock ({currentStock})
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-red-500 uppercase tracking-wider select-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                Out of Stock
+              </span>
+            )}
+          </div>
+
+          {/* Price Section */}
           <div className="flex items-center gap-2 text-sm mt-auto">
             {numericOriginalPrice > 0 && (
               <span className="text-neutral-400 line-through">

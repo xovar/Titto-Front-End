@@ -3,34 +3,39 @@ import Home from "../Pages/Home/Home";
 import RootLayout from "../Layouts/RootLayout";
 import Men from "../Pages/Men/Men";
 import SingleProductDetail from "../Components/Shared/SingleProductDetail";
-import Checkout from "../Components/Shared/Checkout"; 
-import Cart from "../Components/Shared/Cart"; 
+import Checkout from "../Components/Shared/Checkout";
+import Cart from "../Components/Shared/Cart";
+import Wishlist from "../Components/Shared/Wishlist";
 //import NotFound from '../pages/NotFound';
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
-    //errorElement: <NotFound />, 
+    //errorElement: <NotFound />,
     children: [
       {
-        index: true, 
+        index: true,
         element: <Home />,
       },
       {
-        path: "/men", 
+        path: "/men",
         element: <Men />,
       },
       {
-        path: "/product/:id", 
+        path: "/product/:id",
         element: <SingleProductDetail />,
       },
       {
-        path: "/cart", 
+        path: "/cart",
         element: <Cart />,
       },
       {
-        path: "/checkout", 
+        path: "/wishlist",
+        element: <Wishlist />,
+      },
+      {
+        path: "/checkout",
         element: <Checkout />,
       },
     ],

@@ -1,15 +1,16 @@
 import { useState, useMemo } from "react";
-import { useDispatch } from "react-redux"; // 👈 Redux dispatch হুক ইম্পোর্ট করা হলো
-import { useNavigate } from "react-router-dom"; // 👈 রাউটিং এর জন্য useNavigate ইম্পোর্ট করা হলো
-import { addToCart } from "../../store/features/cart/cartSlice"; // 👈 আপনার স্লাইসের সঠিক পাথ দিন
-import { FiX, FiChevronLeft, FiChevronRight, FiHeart, FiShoppingBag } from "react-icons/fi";
+import { useDispatch } from "react-redux"; 
+import { useNavigate } from "react-router-dom"; 
+import { addToCart } from "../../store/features/cart/cartSlice"; 
+import { addToWishlist } from "../../store/features/wishList/wishListSlice";
+import { FiX, FiHeart, FiShoppingBag } from "react-icons/fi";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
+import { Pagination, A11y, Autoplay } from "swiper/modules";
+import { toast } from "react-toastify";
 
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { toast } from "react-toastify";
 
 export default function ProductModal({ 
   product, 
@@ -18,8 +19,8 @@ export default function ProductModal({
   availableColors, 
   onAddToCart 
 }) {
-  const dispatch = useDispatch(); // 👈 ডিসপ্যাচ ডিক্লেয়ার করা হলো
-  const navigate = useNavigate(); // 👈 নেভিগেট ডিক্লেয়ার করা হলো
+  const dispatch = useDispatch(); 
+  const navigate = useNavigate(); 
 
   const [quantity, setQuantity] = useState(1);
   const [swiperRef, setSwiperRef] = useState(null);
@@ -30,39 +31,64 @@ export default function ProductModal({
   const [lensPos, setLensPos] = useState({ x: 0, y: 0 });
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
 
-  // ১. সিলেক্টেড কালার স্টেট
-  const [selectedColor, setSelectedColor] = useState(availableColors[0]?.name || "");
+  // 🎨 ১. কালার সিলেক্ট করার জন্য স্টেট (শুরুতে প্রথম কালারটি ডিফল্ট থাকবে)
+  const [userSelectedColor, setUserSelectedColor] = useState("");
+  const selectedColor = userSelectedColor || availableColors[0]?.name || "";
 
-  // ২. মোডালের ভেতরেও সিলেক্টেড কালারের ওপর বেইজ করে একটিভ ভ্যারিয়েন্ট ফিল্টার
+  // 🔄 ২. সিলেক্টেড কালারের ওপর ভিত্তি করে একটিভ ভ্যারিয়েন্ট ফিল্টার (SingleProduct এর মতো useMemo)
   const activeVariant = useMemo(() => {
-    return product.variants?.find(v => v.color && v.color.name === selectedColor) || product.variants?.[0];
-  }, [product.variants, selectedColor]);
+    const variants = product?.variants;
+    if (!variants || !Array.isArray(variants)) return null;
 
-  // ৩. ডাইনামিকালি মোডালের জন্য সাইজ বের করা
+    return (
+      variants.find(v => v?.color?.name === selectedColor) ||
+      variants[0] ||
+      null
+    );
+  }, [product, selectedColor]);
+
+  // 📏 ৩. একটিভ ভ্যারিয়েন্ট থেকে ডাইনামিক সাইজ লিস্ট বের করা
   const modalAvailableSizes = useMemo(() => {
-    const extractedSizes = activeVariant && activeVariant.sizes
+    const extractedSizes = activeVariant?.sizes
       ? activeVariant.sizes.map((s) => s.size)
       : [];
-    return extractedSizes.length > 0 ? [...new Set(extractedSizes)] : ["39", "40", "41", "42", "43", "44"];
+    return extractedSizes.length > 0 ? [...new Set(extractedSizes)] : [];
   }, [activeVariant]);
 
-  // 💡 শুরুতে কোনো সাইজ সিলেক্টেড থাকবে না
-  const [selectedSize, setSelectedSize] = useState("");
-  
-  const currentSizeToShow = useMemo(() => {
-    return modalAvailableSizes.includes(selectedSize) ? selectedSize : "";
-  }, [selectedSize, modalAvailableSizes]);
+  // 💡 ৪. সাইজ সিলেকশন স্টেট ও ভ্যালিডেশন
+  const [userSelectedSize, setUserSelectedSize] = useState("");
+  const currentSizeToShow = modalAvailableSizes.includes(userSelectedSize) 
+    ? userSelectedSize 
+    : "";
+
+  // 💖 উইশলিস্ট হ্যান্ডলার
+  const handleWishlistClick = () => {
+    const totalStock = product.variants?.reduce((total, variant) => {
+      return total + variant.sizes.reduce((sTotal, s) => sTotal + s.stock, 0);
+    }, 0) || 0;
+
+    const wishlistPayload = {
+      id: product.id,
+      name: product.name,
+      image: product.variants?.[0]?.images?.[0] || "", 
+      price: product.price,
+      inStock: totalStock > 0, 
+    };
+
+    toast.success("Excellent Taste! ❤️");
+    dispatch(addToWishlist(wishlistPayload));
+  };
 
   if (!isOpen) return null;
 
   const incrementQty = () => setQuantity((prev) => prev + 1);
   const decrementQty = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
-  const displayImages = activeVariant?.images || product.images || ["https://via.placeholder.com/400x400?text=Product"];
-
-  const numericPrice = Number(product.price) || 0;
-  const discountPercent = Number(product.discount) || 0;
-  const numericOriginalPrice = product.originalPrice 
+  // ইমেজ এবং প্রাইস সেটআপ
+  const displayImages = activeVariant?.images || product?.images || ["https://via.placeholder.com/400x400?text=Product"];
+  const numericPrice = Number(product?.price) || 0;
+  const discountPercent = Number(product?.discount) || 0;
+  const numericOriginalPrice = product?.originalPrice 
     ? Number(product.originalPrice) 
     : discountPercent > 0 
       ? numericPrice / (1 - discountPercent / 100) 
@@ -70,15 +96,12 @@ export default function ProductModal({
 
   const handleThumbnailClick = (index) => {
     setActiveImageIndex(index);
-    if (swiperRef) {
-      swiperRef.slideTo(index);
-    }
+    if (swiperRef) swiperRef.slideTo(index);
   };
 
   // 🔍 Magnifier Box লজিক
   const handleMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    
     let x = e.clientX - left;
     let y = e.clientY - top;
 
@@ -100,47 +123,49 @@ export default function ProductModal({
     setIsZoomed(true);
   };
 
-  const handleMouseLeave = () => {
-    setIsZoomed(false);
-  };
-
-  // 🚀 রেডাক্সের সাথে কার্ট অ্যাকশন হ্যান্ডলার
+  // 🚀 রেডাক্স এবং চেকাউট নেভিগেশনের সাথে অ্যাকশন হ্যান্ডলার (হুবহু SingleProduct এর স্ট্রাকচারে)
   const handleAction = (actionType) => {
-  if (!currentSizeToShow) {
-    toast.error("Please select a size first!");
-    return;
-  }
+    if (!currentSizeToShow) {
+      toast.error("Please select a size first!");
+      return;
+    }
 
-    // রেডাক্স স্টোরে পাঠানোর জন্য প্রোডাক্ট অবজেক্ট তৈরি
-    const itemToDispatch = {
-      id: product.id || product._id,
-      name: product.name,
-      image: displayImages[0],
-      price: numericPrice,
-      quantity: quantity,
+    // 📦 SingleProduct পেজের মতোই প্রপার স্ট্রাকচারড ডেটা পেলোড (Payload)
+    const orderPayload = {
+      productId: product?.id,
+      variantId: activeVariant?.id,
+      name: product?.name,
+      quantity,
       size: currentSizeToShow,
-      color: selectedColor || "Default",
+      color: selectedColor,
+      price: numericPrice,
+      image: displayImages[0] || "https://via.placeholder.com/150",
+      category: product?.category?.name || ""
     };
 
-    // ১. রেডাক্স অ্যাকশন ট্রিগার করে স্টোরে ডেটা সেভ করা
-    dispatch(addToCart(itemToDispatch));
+    if (actionType === "cart") {
+      // 🛒 রিডাক্স কার্টে ডাটা পুশ
+      dispatch(addToCart(orderPayload));
+      toast.success(`${quantity}x ${product?.name} added to cart!`);
 
-    // ২. প্যারেন্ট কম্পোনেন্টের যদি কোনো অন-ক্লিক হ্যান্ডলার প্রয়োজন হয় (অপশনাল)
-    if (onAddToCart) {
-      onAddToCart({
-        quantity,
-        size: currentSizeToShow,
-        color: selectedColor,
-        finalPrice: numericPrice,
-        action: actionType
-      });
+      if (onAddToCart) {
+        onAddToCart({
+          quantity,
+          size: currentSizeToShow,
+          color: selectedColor,
+          finalPrice: numericPrice,
+          action: actionType
+        });
+      }
+    } else if (actionType === "buy_now") {
+      onClose(); // ১. মোডাল বন্ধ হবে
+      toast.info(`Proceeding to buy ${quantity}x ${product?.name}!`);
+      
+      // ⚡ ২. আপনার কাঙ্ক্ষিত হুবহু চেকাউট নেভিগেশন স্টেট সহকারে!
+      navigate("/checkout", { state: { checkoutItem: orderPayload } });
     }
 
-    // ৩. অ্যাকশন টাইপ অনুযায়ী ইউজার এক্সপেরিয়েন্স হ্যান্ডল করা
-    if (actionType === "buy_now") {
-      onClose(); // মোডাল বন্ধ হবে
-      navigate("/cart"); // সরাসরি কার্ট পেজে নিয়ে যাবে
-    }
+    console.log(`${actionType} payload:`, orderPayload);
   };
 
   return (
@@ -167,7 +192,7 @@ export default function ProductModal({
             <Swiper
               onSwiper={setSwiperRef}
               key={`modal-${product.id}-${selectedColor}`}
-              modules={[Navigation, Pagination, A11y, Autoplay]}
+              modules={[Pagination, A11y, Autoplay]}
               spaceBetween={0}
               slidesPerView={1}
               onSlideChange={(swiper) => setActiveImageIndex(swiper.activeIndex)}
@@ -178,7 +203,7 @@ export default function ProductModal({
                   <div 
                     className="w-full h-full relative overflow-hidden flex items-center justify-center cursor-zoom-in"
                     onMouseMove={handleMouseMove}
-                    onMouseLeave={handleMouseLeave}
+                    onMouseLeave={() => setIsZoomed(false)}
                   >
                     <img
                       src={imgUrl}
@@ -213,25 +238,6 @@ export default function ProductModal({
                 </SwiperSlide>
               ))}
             </Swiper>
-
-            {displayImages.length > 1 && !isZoomed && (
-              <>
-                <button
-                  type="button"
-                  className="modal-swiper-prev absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 cursor-pointer rounded-full bg-white border border-neutral-200/80 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200"
-                  onClick={() => swiperRef?.slidePrev()}
-                >
-                  <FiChevronLeft className="w-5 h-5 stroke-[2.2]" />
-                </button>
-                <button
-                  type="button"
-                  className="modal-swiper-next absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 cursor-pointer rounded-full bg-white border border-neutral-200/80 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200"
-                  onClick={() => swiperRef?.slideNext()}
-                >
-                  <FiChevronRight className="w-5 h-5 stroke-[2.2]" />
-                </button>
-              </>
-            )}
           </div>
 
           {displayImages.length > 1 && (
@@ -256,6 +262,9 @@ export default function ProductModal({
 
         {/* Right Column: Information Panel */}
         <div className="flex-1 flex flex-col justify-start text-left pt-2">
+          <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">
+            {product?.category?.name}
+          </span>
           <h2 className="text-2xl md:text-3xl font-extrabold text-neutral-900 mb-2 tracking-tight">
             {product.name}
           </h2> 
@@ -263,11 +272,11 @@ export default function ProductModal({
           <div className="flex items-center gap-3 text-lg md:text-xl font-bold mb-4">
             {numericOriginalPrice > 0 && (
               <span className="text-neutral-400 line-through font-normal">
-                ${numericOriginalPrice.toFixed(2)}
+                ৳{numericOriginalPrice.toFixed(0)}
               </span>
             )}
             <span className="text-[#ea4c3b]">
-              ${numericPrice.toFixed(2)}
+              ৳{numericPrice.toFixed(0)}
             </span>
           </div>
 
@@ -277,56 +286,60 @@ export default function ProductModal({
 
           <div className="space-y-4 mb-6">
             {/* MODAL SIZE SELECTOR */}
-            <div>
-              <label className="block text-[11px] font-extrabold text-neutral-700 uppercase tracking-wider mb-2">
-                Size: <span className="text-neutral-400 font-normal ml-1">{currentSizeToShow || "Select yours"}</span>
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {modalAvailableSizes.map((size) => {
-                  const isSelected = currentSizeToShow === size;
-                  return (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setSelectedSize(size)}
-                      className={`h-9 min-w-9 px-3 rounded-md text-xs font-semibold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
-                        isSelected
-                          ? "bg-white text-black border border-black ring-1 ring-black"
-                          : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  );
-                })}
+            {modalAvailableSizes.length > 0 && (
+              <div>
+                <label className="block text-[11px] font-extrabold text-neutral-700 uppercase tracking-wider mb-2">
+                  Size: <span className="text-neutral-400 font-normal ml-1">{currentSizeToShow || "Select yours"}</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {modalAvailableSizes.map((size) => {
+                    const isSelected = currentSizeToShow === size;
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setUserSelectedSize(size)}
+                        className={`h-9 min-w-9 px-3 rounded-md text-xs font-semibold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
+                          isSelected
+                            ? "bg-black text-white border border-black ring-1 ring-black"
+                            : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* MODAL COLOR SELECTOR */}
-            <div>
-              <label className="block text-[11px] font-extrabold text-neutral-700 uppercase tracking-wider mb-2">
-                Color: <span className="text-neutral-400 font-normal capitalize ml-1">{selectedColor}</span>
-              </label>
-              <div className="flex flex-wrap gap-3 py-1">
-                {availableColors.map((colorObj) => {
-                  const isSelected = selectedColor === colorObj.name;
-                  return (
-                    <button
-                      key={colorObj.id || colorObj.name}
-                      type="button"
-                      onClick={() => setSelectedColor(colorObj.name)}
-                      style={{ backgroundColor: colorObj.code }}
-                      className={`w-6 h-6 rounded-full cursor-pointer transition-all duration-200 hover:scale-110 relative ${
-                        isSelected
-                          ? "ring-2 ring-offset-2 ring-neutral-900 scale-110 z-10"
-                          : "border border-neutral-200"
-                      }`}
-                      title={colorObj.name}
-                    />
-                  );
-                })}
+            {availableColors.length > 0 && (
+              <div>
+                <label className="block text-[11px] font-extrabold text-neutral-700 uppercase tracking-wider mb-2">
+                  Color: <span className="text-neutral-400 font-normal capitalize ml-1">{selectedColor}</span>
+                </label>
+                <div className="flex flex-wrap gap-3 py-1">
+                  {availableColors.map((colorObj) => {
+                    const isSelected = selectedColor === colorObj.name;
+                    return (
+                      <button
+                        key={colorObj.id || colorObj.name}
+                        type="button"
+                        onClick={() => setUserSelectedColor(colorObj.name)}
+                        style={{ backgroundColor: colorObj.code }}
+                        className={`w-6 h-6 rounded-full cursor-pointer transition-all duration-200 hover:scale-110 relative ${
+                          isSelected
+                            ? "ring-2 ring-offset-2 ring-neutral-900 scale-110 z-10"
+                            : "border border-neutral-200"
+                        }`}
+                        title={colorObj.name}
+                      />
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* QUANTITY SELECTOR */}
@@ -408,6 +421,7 @@ export default function ProductModal({
 
             <button
               type="button"
+              onClick={handleWishlistClick}
               className="w-full cursor-pointer bg-white hover:bg-neutral-900 text-neutral-800 hover:text-white border border-neutral-300 font-medium text-sm py-2.5 rounded transition-colors flex items-center justify-center gap-2"
             >
               Add to Wishlist <FiHeart className="w-4 h-4 " />

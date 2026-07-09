@@ -1,6 +1,10 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+// ⚡ useDispatch ইমপোর্ট করা হলো
+import { useSelector, useDispatch } from "react-redux"; 
+// 📦 আপনার প্রোজেক্টের কার্ট স্লাইস থেকে addToCart অ্যাকশনটি ইমপোর্ট করুন (পাথটি আপনার প্রোজেক্ট অনুযায়ী চেক করে নিন)
+ 
+
 import {
   FiHeart,
   FiShoppingBag,
@@ -15,10 +19,12 @@ import { toast } from "react-toastify";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import { addToCart } from "../../store/features/cart/cartSlice";
 
 export default function SingleProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch(); // ⚡ রিডাক্স ডিসপ্যাচ ইনিশিয়েলাইজ করা হলো
 
   // ⚡ ১. রিডাক্স স্টোর থেকে রিয়েল ডাটা আনা এবং আইডি দিয়ে ফিল্টার করা
   const { items: products } = useSelector((state) => state.products);
@@ -35,7 +41,7 @@ export default function SingleProduct() {
   const [lensPos, setLensPos] = useState({ x: 0, y: 0 });
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
 
-  // 🎨 ২. ডাইনামিক কালার লিস্ট বের করা (useMemo এরর ফিক্সড)
+  // 🎨 ২. ডাইনামিক কালার লিস্ট বের করা
   const availableColors = useMemo(() => {
     const variants = product?.variants;
     if (!variants || !Array.isArray(variants)) return [];
@@ -49,7 +55,7 @@ export default function SingleProduct() {
       );
   }, [product]);
 
-  // ⚡ ৩. ক্যাসকেডিং রেন্ডার এড়াতে Derived State (কোনো useEffect নেই)
+  // ⚡ ৩. ক্যাসকেডিং রেন্ডার এড়াতে Derived State
   const [userSelectedColor, setUserSelectedColor] = useState("");
   const selectedColor = userSelectedColor || availableColors[0]?.name || "";
 
@@ -63,7 +69,7 @@ export default function SingleProduct() {
       variants[0] ||
       null
     );
-  }, [product, selectedColor]); // 👈 ডিপেন্ডেন্সিতে শুধু product এবং selectedColor থাকবে
+  }, [product, selectedColor]);
 
   // 📏 ৫. ডাইনামিক সাইজ লিস্ট বের করা
   const availableSizes = useMemo(() => {
@@ -74,7 +80,6 @@ export default function SingleProduct() {
   }, [activeVariant]);
 
   const [userSelectedSize, setUserSelectedSize] = useState("");
-  // সাইজটি যদি বর্তমান কালার ভ্যারিয়েন্টে এভেইলেবল থাকে তবেই শো করবে
   const currentSizeToShow = availableSizes.includes(userSelectedSize)
     ? userSelectedSize
     : "";
@@ -119,6 +124,7 @@ export default function SingleProduct() {
     if (swiperRef) swiperRef.slideTo(index);
   };
 
+  // ⚡ এই ফাংশনে শুধু রিডাক্স ডিসপ্যাচটা সচল করে দেওয়া হয়েছে
   const handleAction = (actionType) => {
     if (!currentSizeToShow) {
       toast.error("Please select a size first!");
@@ -134,24 +140,22 @@ export default function SingleProduct() {
       size: currentSizeToShow,
       color: selectedColor,
       price: numericPrice,
-      image: displayImages[0] || "https://via.placeholder.com/150", // প্রথম ইমেজটি পাস করা হচ্ছে
+      image: displayImages[0] || "https://via.placeholder.com/150",
       category: product.category?.name || ""
     };
 
     if (actionType === "cart") {
+      // 🛒 Product Modal এর মতো এখানেও রিডাক্সে ডাটা পাঠিয়ে দেওয়া হলো
+      dispatch(addToCart(orderPayload)); 
       toast.success(`${quantity}x ${product?.name} added to cart!`);
-      // এখানে আপনার কার্ট রিডাক্স অ্যাকশন ডিসপ্যাচ করতে পারেন: dispatch(addToCart(orderPayload));
     } else if (actionType === "buy_now") {
       toast.info(`Proceeding to buy ${quantity}x ${product?.name}!`);
-      
-      // ⚡ রিঅ্যাক্ট রাউটারের মাধ্যমে ডেটা সহ চেকাউট পেজে নেভিগেট করা
       navigate("/checkout", { state: { checkoutItem: orderPayload } });
     }
 
     console.log(`${actionType} payload:`, orderPayload);
   };
 
-  // 🛑 সব হুক ডিক্লেয়ারেশনের পর কন্ডিশনাল রিটার্ন (Rules of Hooks ফিক্সড)
   if (!product) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
@@ -173,7 +177,7 @@ export default function SingleProduct() {
       <div className="flex flex-col lg:flex-row gap-12 items-start">
         {/* Left Column: Image Area & Grid Thumbnails */}
         <div className="w-full lg:w-1/2 flex flex-col gap-4">
-          <div className="w-full aspect-square border border-neutral-200 rounded-2xl relative overflow-hidden group/slider flex items-center justify-center bg-white overflow-hidden group/slider flex items-center justify-center bg-white overflow-hidden group/slider flex items-center justify-center bg-white overflow-hidden group/slider flex items-center justify-center bg-white">
+          <div className="w-full aspect-square border border-neutral-200 rounded-2xl relative flex items-center justify-center overflow-hidden bg-white">
             <Swiper
               onSwiper={setSwiperRef}
               key={`single-${product.id}-${selectedColor}`}
@@ -198,7 +202,7 @@ export default function SingleProduct() {
                     <img
                       src={imgUrl}
                       alt={product.name}
-                      className="w-full h-full object-contain max-h-[480px] mx-auto"
+                      className="w-full h-full object-contain max-h-120 mx-auto"
                     />
 
                     {isZoomed && (
@@ -233,14 +237,14 @@ export default function SingleProduct() {
               <>
                 <button
                   type="button"
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 hover:bg-neutral-900 hover:text-white transition-all duration-200"
                   onClick={() => swiperRef?.slidePrev()}
                 >
                   <FiChevronLeft className="w-5 h-5 stroke-[2.2]" />
                 </button>
                 <button
                   type="button"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 group-hover/slider:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 hover:bg-neutral-900 hover:text-white transition-all duration-200"
                   onClick={() => swiperRef?.slideNext()}
                 >
                   <FiChevronRight className="w-5 h-5 stroke-[2.2]" />
@@ -291,7 +295,7 @@ export default function SingleProduct() {
                   ৳{numericOriginalPrice.toFixed(0)}
                 </span>
               )}
-              <span className="text-[#ea4c3b] text-2xl">
+              <span className="text--[#ea4c3b] text-2xl">
                 ৳{numericPrice.toFixed(0)}
               </span>
             </div>
@@ -354,7 +358,7 @@ export default function SingleProduct() {
                       key={size}
                       type="button"
                       onClick={() => setUserSelectedSize(size)}
-                      className={`h-10 min-w-[40px] px-3.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
+                      className={`h-10 min-w-10 px-3.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
                         isSelected
                           ? "bg-neutral-900 text-white border border-neutral-900 shadow-sm"
                           : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
@@ -370,7 +374,7 @@ export default function SingleProduct() {
 
           {/* QUANTITY */}
           <div className="flex items-center gap-3 mb-5 pt-2">
-            <span className="text-[11px] font-extrabold text-neutral-700 uppercase tracking-wider">
+            <span className="text-shadow text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
               Quantity:
             </span>
             <div className="flex items-center border border-neutral-200 rounded bg-white h-8 overflow-hidden shadow-xs">
@@ -394,21 +398,13 @@ export default function SingleProduct() {
             </div>
           </div>
 
-          {/* 📏 SIZE & CARE GUIDE */}
+          {/* SIZE & CARE GUIDE */}
           <div className="flex gap-5 text-xs font-medium text-neutral-800 mb-4 select-none pt-2">
             <button
               type="button"
               className="cursor-pointer hover:opacity-80 flex items-center gap-1.5 bg-transparent border-0 p-0"
             >
-              <svg
-                className="w-4 h-4 text-neutral-800"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg className="w-4 h-4 text-neutral-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9h18v6H3z" />
                 <path d="M6 9v3M9 9v2M12 9v3M15 9v2M18 9v3" />
               </svg>
@@ -418,15 +414,7 @@ export default function SingleProduct() {
               type="button"
               className="cursor-pointer hover:opacity-80 flex items-center gap-1.5 bg-transparent border-0 p-0"
             >
-              <svg
-                className="w-4 h-4 text-neutral-800"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg className="w-4 h-4 text-neutral-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 4h14l1 7H4z" />
                 <path d="M4 11h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
                 <path d="M9 14h6" />
@@ -435,30 +423,21 @@ export default function SingleProduct() {
             </button>
           </div>
 
-          {/* 🔥 LIVE TRACKING DATA BOX */}
+          {/* LIVE TRACKING DATA BOX */}
           <div className="border border-neutral-300 rounded-2xs p-3 bg-white text-xs text-neutral-900 space-y-2.5 mb-5 max-w-md w-full font-normal pt-2">
             <div className="flex items-center gap-2">
-              <span className="text-emerald-500 font-bold text-sm select-none">
-                🗹
-              </span>
-              <span>
-                <strong>Viewed:</strong> 232 people recently VIEWED this product.
-              </span>
+              <span className="text-emerald-500 font-bold text-sm select-none">🗹</span>
+              <span><strong>Viewed:</strong> 232 people recently VIEWED this product.</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-black font-bold text-sm select-none">
-                🔥
-              </span>
-              <span>
-                <strong>Popular:</strong> 5 people have BOUGHT this product.
-              </span>
+              <span className="text-black font-bold text-sm select-none">🔥</span>
+              <span><strong>Popular:</strong> 5 people have BOUGHT this product.</span>
             </div>
           </div>
 
-          {/* DYNAMIC ACTION BUTTONS BLOCK (image_baa901.png & image_baa9b8.png এর হুবহু ডিজাইন) */}
+          {/* DYNAMIC ACTION BUTTONS BLOCK */}
           <div className="space-y-2 w-full max-w-md mt-auto pt-2">
             {!currentSizeToShow ? (
-              /* ১. সাইজ সিলেক্ট না থাকলে: ফুল-উইথ কালো বাটন (image_baa901.png) */
               <button
                 type="button"
                 className="w-full bg-black text-white font-medium text-sm py-3 rounded transition-colors"
@@ -467,7 +446,6 @@ export default function SingleProduct() {
                 Select Size
               </button>
             ) : (
-              /* ২. সাইজ সিলেক্ট থাকলে: বিভক্ত বাটন (image_baa9b8.png) */
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -486,7 +464,6 @@ export default function SingleProduct() {
               </div>
             )}
 
-            {/* ৩. উইশলিস্ট বাটন (উভয় ক্ষেত্রেই নিচে থাকবে) */}
             <button
               type="button"
               className="w-full cursor-pointer bg-white hover:bg-neutral-900 text-neutral-800 hover:text-white border border-neutral-300 font-medium text-sm py-2.5 rounded transition-colors flex items-center justify-center gap-2"

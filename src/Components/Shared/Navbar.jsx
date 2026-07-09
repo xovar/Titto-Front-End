@@ -100,7 +100,7 @@ function Navbar() {
 
       {/* Right Actions Wrapper */}
       <div className="flex items-center gap-5 text-xl z-50">
-        <FaRegHeart className={iconClass} />
+        <FaRegHeart className={iconClass}  onClick={() => navigate('/wishlist')} />
 
         {/* 🛠️ DaisyUI Badge Component Added Here */}
         <div

@@ -3,9 +3,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FiHelpCircle, FiLock, FiChevronDown, FiChevronUp, FiShoppingBag, FiCheck } from "react-icons/fi";
 import OrderSummaryContent from "./OrderSummaryContent";
 
+// 📦 ১. রেডাক্স হুক এবং কার্ট স্লাইস থেকে clearCart অ্যাকশনটি ইমপোর্ট করুন
+import { useDispatch } from "react-redux";
+import { clearCart } from "../../store/features/cart/cartSlice"; // 👈 আপনার প্রজেক্টের সঠিক পাথটি দিন
+
 export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch(); // ⚡ ২. ডিসপ্যাচ মেথড ইনিশিয়ালাইজ করুন
   
   // 📥 ডাটা রিসিভ
   const cartItems = location.state?.cartItems || [];
@@ -32,7 +37,6 @@ export default function Checkout() {
     postalCode: "",
     phone: "",
     saveInfo: false,
-    // বিলিং অ্যাড্রেসের ফিল্ডসমূহ
     billingCountry: "Bangladesh",
     billingFirstName: "",
     billingLastName: "",
@@ -67,8 +71,15 @@ export default function Checkout() {
     setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
+  // 💾 ৩. অর্ডার কনফার্মেশন সাবমিট হ্যান্ডলার
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // ⚡ 🔥 ম্যাজিক কন্ডিশন: যদি ইউজার কার্ট পেজ থেকে আসে (অর্থাৎ cartItems-এ ডাটা থাকে)
+    if (cartItems.length > 0) {
+      dispatch(clearCart()); // রেডাক্স স্টেট এবং লোকাল স্টোরেজ দুটোই ফাঁকা হয়ে যাবে
+    }
+
     setIsOrderConfirmed(true);
   };
 
@@ -150,7 +161,7 @@ export default function Checkout() {
                         <p>{formData.cityDistrict} {formData.postalCode}</p>
                         <p>{formData.country}</p>
                         <p>{formData.phone}</p>
-                      </>
+                      </                    >
                     ) : (
                       <>
                         <p>{formData.billingFirstName} {formData.billingLastName}</p>
@@ -201,7 +212,7 @@ export default function Checkout() {
   // =========================================================================
   return (
     <div className="min-h-screen bg-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-10">
-      
+      {/* বাকি JSX ডিজাইন একদম আগের মতোই থাকবে */}
       <div className="flex justify-between items-center pb-4 border-b border-neutral-200 lg:hidden mb-4">
         <div className="font-black tracking-wider text-xl">BRAND LOGO</div>
         <FiShoppingBag className="w-5 h-5 text-neutral-700" />
@@ -624,7 +635,7 @@ export default function Checkout() {
                         placeholder="01753628655"
                         value={formData.billingPhone}
                         onChange={handleInputChange}
-                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black pl-4 pr-16 caret-black relative z-10 bg-transparent"
+                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black pl-4 pr-16 caret-black relative z-10 "
                       />
                       <div className="absolute right-4 flex items-center gap-2 text-neutral-400 select-none z-0 pointer-events-none">
                         <span className="text-xl">🇧🇩</span>
