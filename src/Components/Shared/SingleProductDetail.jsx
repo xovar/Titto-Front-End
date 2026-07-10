@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 // ⚡ useDispatch ইমপোর্ট করা হলো
 import { useSelector, useDispatch } from "react-redux"; 
-// 📦 আপনার প্রোজেক্টের কার্ট স্লাইস থেকে addToCart অ্যাকশনটি ইমপোর্ট করুন (পাথটি আপনার প্রোজেক্ট অনুযায়ী চেক করে নিন)
+// 📦 আপনার প্রোজেক্টের কার্ট স্লাইস থেকে addToCart অ্যাকশনটি ইমপোর্ট করুন (পাথটি আপনার প্রোজেক্ট অনুযায়ী চেক করে নিন)
  
 
 import {
@@ -24,10 +24,10 @@ import { addToCart } from "../../store/features/cart/cartSlice";
 export default function SingleProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch(); // ⚡ রিডাক্স ডিসপ্যাচ ইনিশিয়েলাইজ করা হলো
+  const dispatch = useDispatch(); // ⚡ রিডাক্স ডিসপ্যাচ ইনিশিয়েলাইজ করা হলো
 
-  // ⚡ ১. রিডাক্স স্টোর থেকে রিয়েল ডাটা আনা এবং আইডি দিয়ে ফিল্টার করা
-  const { items: products } = useSelector((state) => state.products);
+  // ⚡ ১. রিডাক্স স্টোর থেকে রিয়েল ডাটা এবং লোডিং স্টেট আনা
+  const { items: products, loading } = useSelector((state) => state.products);
   const product = useMemo(() => {
     return products?.find((p) => p.id === id);
   }, [products, id]);
@@ -124,14 +124,13 @@ export default function SingleProduct() {
     if (swiperRef) swiperRef.slideTo(index);
   };
 
-  // ⚡ এই ফাংশনে শুধু রিডাক্স ডিসপ্যাচটা সচল করে দেওয়া হয়েছে
+  // ⚡ রিডাক্স ডিসপ্যাচ অ্যাকশন ফাংশন
   const handleAction = (actionType) => {
     if (!currentSizeToShow) {
       toast.error("Please select a size first!");
       return;
     }
 
-    // 📦 ডেটা পেলোড (Payload) তৈরি করা
     const orderPayload = {
       productId: product?.id,
       variantId: activeVariant?.id,
@@ -145,7 +144,6 @@ export default function SingleProduct() {
     };
 
     if (actionType === "cart") {
-      // 🛒 Product Modal এর মতো এখানেও রিডাক্সে ডাটা পাঠিয়ে দেওয়া হলো
       dispatch(addToCart(orderPayload)); 
       toast.success(`${quantity}x ${product?.name} added to cart!`);
     } else if (actionType === "buy_now") {
@@ -156,15 +154,28 @@ export default function SingleProduct() {
     console.log(`${actionType} payload:`, orderPayload);
   };
 
+  /* ⏳ কন্ডিশন ১: যদি রিডাক্স ডাটা ব্যাকএন্ড থেকে লোড হতে থাকে */
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3 bg-white">
+        <span className="loading loading-spinner loading-lg text-[#ea4c3b]"></span>
+        <p className="text-sm text-neutral-400 font-bold uppercase tracking-wider animate-pulse">
+          Loading Product Details...
+        </p>
+      </div>
+    );
+  }
+
+  /* ❌ কন্ডিশন ২: লোডিং শেষ কিন্তু প্রোডাক্ট খুঁজে পাওয়া যায়নি */
   if (!product) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 bg-white">
         <h2 className="text-xl font-bold text-neutral-700">
           Product Not Found!
         </h2>
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-neutral-600 hover:text-black border px-4 py-2 rounded-lg"
+          className="flex items-center gap-2 text-sm text-neutral-600 hover:text-black border px-4 py-2 rounded-lg transition-all"
         >
           <FiArrowLeft /> Go Back
         </button>
@@ -172,6 +183,7 @@ export default function SingleProduct() {
     );
   }
 
+  // 📦 কন্ডিশন ৩: ডাটা সাকসেসফুলি চলে এসেছে, এখন UI রেন্ডার হবে
   return (
     <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="flex flex-col lg:flex-row gap-12 items-start">
@@ -295,7 +307,7 @@ export default function SingleProduct() {
                   ৳{numericOriginalPrice.toFixed(0)}
                 </span>
               )}
-              <span className="text--[#ea4c3b] text-2xl">
+              <span className="text-[#ea4c3b] text-2xl">
                 ৳{numericPrice.toFixed(0)}
               </span>
             </div>

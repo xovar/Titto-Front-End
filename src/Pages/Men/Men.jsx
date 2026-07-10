@@ -7,7 +7,7 @@ import ProductSortBar from '../../Components/Shared/ProductSortBar';
 import Pagination from '../../Components/Shared/Pagination';
 
 export default function Men() {
-  const { items: products, categories, colors } = useSelector((state) => state.products);
+  const { items: products, categories, colors, loading } = useSelector((state) => state.products);
   console.log(products, categories, colors);
   const categoriesList = categories;
   const sizesList = ['All', '39', '40', '41', '42', '43', '44', '45'];
@@ -28,10 +28,10 @@ export default function Men() {
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); 
 
-  // --- LOGIC: FILTER (স্ট্রিং প্রাইস এবং কালার অবজেক্ট হ্যান্ডেল করার জন্য সংশোধিত) ---
+  // --- LOGIC: FILTER ---
   let processedProducts = products.filter(product => {
     
-    // ১. প্রাইস চেক (স্ট্রিং থেকে নাম্বারে কনভার্ট করা হয়েছে)
+    // ১. প্রাইস চেক
     const numericPrice = Number(product.price) || 0;
     const matchesPrice = numericPrice <= maxPrice;
     
@@ -39,13 +39,13 @@ export default function Men() {
     const matchesCategory = selectedCategory === 'All' || 
       (product.category && product.category.id === selectedCategory);
     
-    // ৩. ভেরিয়েন্টস -> সাইজেস -> সাইজ টেক্সট চেক
+    // ৩. ভেরিয়েন্টস -> সাইজেস -> সাইজ টেক্সট চেক
     const matchesSize = selectedSize === 'All' || 
       (product.variants && product.variants.some(variant => 
         variant.sizes && variant.sizes.some(s => s.size === selectedSize)
       ));
     
-    // ৪. ভেরিয়েন্টস -> কালার অবজেক্টের name চেক
+    // ৪. ভেরিয়েন্টস -> কালার অবজেক্টের name চেক
     const matchesColor = selectedColor === 'All' || 
       (product.variants && product.variants.some(variant => 
         variant.color && variant.color.name === selectedColor
@@ -54,7 +54,7 @@ export default function Men() {
     return matchesPrice && matchesCategory && matchesSize && matchesColor;
   });
 
-  // Sort Logic (নাম্বার কনভার্ট করে সর্টিং করা হচ্ছে)
+  // Sort Logic
   if (sortOption === 'Price: Low to High') {
     processedProducts.sort((a, b) => Number(a.price) - Number(b.price));
   } else if (sortOption === 'Price: High to Low') {
@@ -78,13 +78,11 @@ export default function Men() {
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
     setCurrentPage(1); 
-    console.log(selectedCategory);
   };
 
   const handleSizeChange = (size) => {
     setSelectedSize(size);
     setCurrentPage(1); 
-    console.log(size);
   };
 
   const handleColorChange = (colorName) => {
@@ -140,9 +138,16 @@ export default function Men() {
             setCurrentPage={setCurrentPage}
           />
 
-          {/* DYNAMIC PRODUCT CONTAINER */}
-          <div className={`mb-10 w-full ${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-6'}`}>
-            {currentProducts.length > 0 ? (
+          {/* DYNAMIC PRODUCT CONTAINER (LOADING CONDITION ADDED HERE) */}
+          <div className={`mb-10 w-full ${viewMode === 'grid' && !loading ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-6'}`}>
+            
+            {loading ? (
+              /* ⏳ যখন রেডাক্স loading ট্রু থাকবে তখন এই সুন্দর স্পিনারটি দেখাবে */
+              <div className="flex flex-col items-center justify-center py-20 w-full col-span-full bg-white border border-neutral-200 rounded-xl shadow-sm">
+                <span className="loading loading-spinner loading-lg text-[#ea4c3b]"></span>
+                <p className="text-sm text-neutral-400 font-bold uppercase mt-4 tracking-wider">Loading products...</p>
+              </div>
+            ) : currentProducts.length > 0 ? (
               currentProducts.map((product) => (
                 <ProductCard key={product.id} product={product} viewMode={viewMode} />
               ))
@@ -151,14 +156,17 @@ export default function Men() {
                 No products match your selected filters. Try changing category, size, color, or increasing the price.
               </p>
             )}
+            
           </div>
 
           {/* PAGINATION COMPONENT */}
-          <Pagination 
-            totalPages={totalPages}
-            safeCurrentPage={safeCurrentPage}
-            handlePageChange={handlePageChange}
-          />
+          {!loading && (
+            <Pagination 
+              totalPages={totalPages}
+              safeCurrentPage={safeCurrentPage}
+              handlePageChange={handlePageChange}
+            />
+          )}
 
         </main>
       </div>
