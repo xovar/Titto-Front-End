@@ -12,8 +12,10 @@ function Navbar() {
   const navigate = useNavigate();
 
   const { cartItems } = useSelector((state) => state.cart);
+  const { items : wishlistItems } = useSelector((state) => state.wishlist);
 
   const cartCount = cartItems.length;
+  const wishlistCount = wishlistItems.length;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -100,7 +102,17 @@ function Navbar() {
 
       {/* Right Actions Wrapper */}
       <div className="flex items-center gap-5 text-xl z-50">
-        <FaRegHeart className={iconClass}  onClick={() => navigate('/wishlist')} />
+        <div
+        className="indicator flex items-center justify-center"
+        onClick={() => navigate('/wishlist')} 
+        >
+          {wishlistCount > 0 && (
+            <span className="indicator-item badge bg-red-500 text-white font-black text-[10px] scale-90 px-1.5 h-4 min-h-4 border-none select-none">
+              {wishlistCount}
+            </span>
+          )}
+          <FaRegHeart className={iconClass}/>
+        </div>
 
         {/* 🛠️ DaisyUI Badge Component Added Here */}
         <div

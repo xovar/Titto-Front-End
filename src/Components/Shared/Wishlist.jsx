@@ -1,20 +1,20 @@
 import { useSelector, useDispatch } from "react-redux";
 import { FiX } from "react-icons/fi";
-import { removeFromWishlist } from "../../store/features/wishList/wishListSlice"; // আপনার পাথ অনুযায়ী চেক করে নিবেন
+import { removeFromWishlist } from "../../store/features/wishList/wishListSlice"; 
 import { useNavigate } from "react-router-dom";
 
 export default function Wishlist() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   
   // 📥 Redux Store থেকে উইশলিস্টের ডেটা আনা হচ্ছে
-  const wishlistItems = useSelector((state) => state.wishlist.items);
+  const wishlistItems = useSelector((state) => state.wishlist.items) || [];
 
-  // ❌ উইশলিস্ট থেকে আইটেম রিমুভ করার হ্যান্ডলার
-  const handleRemove = (id) => {
+  // ❌ উইশলিস্ট থেকে আইটেম রিমুভ করার হ্যান্ডলার (stopPropagation যোগ করা হয়েছে)
+  const handleRemove = (e, id) => {
+    e.stopPropagation(); // 👈 এই লাইনটি রো-এর ক্লিক ইভেন্টকে (navigate) ট্রিগার করা থেকে আটকাবে
     dispatch(removeFromWishlist(id));
   };
-
-  const navigate = useNavigate();
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 text-left">
@@ -41,7 +41,11 @@ export default function Wishlist() {
             </thead>
             <tbody className="divide-y divide-neutral-100">
               {wishlistItems.map((item) => (
-                <tr key={item.id} className="group cursor-pointer" onClick={() => navigate(`/product/${item.id}`)}>
+                <tr 
+                  key={item.id} 
+                  className="group cursor-pointer hover:bg-neutral-50 transition-colors" 
+                  onClick={() => navigate(`/product/${item.id}`)}
+                >
                   {/* Image */}
                   <td className="py-5">
                     <div className="w-24 h-24 border border-neutral-200 rounded-xl overflow-hidden bg-neutral-50 flex items-center justify-center p-2">
@@ -55,7 +59,7 @@ export default function Wishlist() {
 
                   {/* Name */}
                   <td className="py-5 pr-4 align-middle">
-                    <h3 className="font-black text-sm uppercase tracking-wide text-neutral-900 hover:text-red-500 transition-colors cursor-pointer">
+                    <h3 className="font-black text-sm uppercase tracking-wide text-neutral-900 hover:text-red-500 transition-colors">
                       {item.name}
                     </h3>
                   </td>
@@ -84,8 +88,8 @@ export default function Wishlist() {
                   <td className="py-5 align-middle text-right">
                     <div className="flex items-center justify-end gap-4">
                       <button
-                        onClick={() => handleRemove(item.id)}
-                        className="p-2 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
+                        onClick={(e) => handleRemove(e, item.id)} // 👈 ইভেন্ট পাস করা হয়েছে
+                        className="p-2 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer z-10"
                         title="Remove"
                       >
                         <FiX className="w-5 h-5" />
@@ -100,11 +104,15 @@ export default function Wishlist() {
           {/* 📱 Mobile Responsive List View */}
           <div className="md:hidden space-y-4">
             {wishlistItems.map((item) => (
-              <div key={item.id} className="border border-neutral-200 rounded-xl p-4 flex gap-4 relative bg-white cursor-pointer" onClick={() => navigate(`/product/${item.id}`)}>
+              <div 
+                key={item.id} 
+                className="border border-neutral-200 rounded-xl p-4 flex gap-4 relative bg-white cursor-pointer" 
+                onClick={() => navigate(`/product/${item.id}`)}
+              >
                 {/* Remove Button Mobile */}
                 <button
-                  onClick={() => handleRemove(item.id)}
-                  className="absolute top-3 right-3 text-neutral-400 hover:text-red-500 cursor-pointer"
+                  onClick={(e) => handleRemove(e, item.id)} // 👈 ইভেন্ট পাস করা হয়েছে
+                  className="absolute top-3 right-3 text-neutral-400 hover:text-red-500 cursor-pointer z-10"
                 >
                   <FiX className="w-5 h-5" />
                 </button>
