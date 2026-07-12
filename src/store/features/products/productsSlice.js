@@ -6,6 +6,7 @@ const initialState = {
   error: null,
   categories: [],
   colors: [],
+  brands: [], // ⚡ ১. ব্র্যান্ডের জন্য খালি অ্যারে যোগ করা হলো
 };
 
 const productSlice = createSlice({
@@ -31,9 +32,15 @@ const productSlice = createSlice({
       state.colors = action.payload;
       state.loading = false;
     },
+    // ⚡ ২. ব্র্যান্ডের ডাটা স্টেটে সেভ করার রিডিউসার
+    setBrands: (state, action) => {
+      state.brands = action.payload;
+      state.loading = false;
+    },
   },
 });
 
-export const { setProducts, setLoading, setError, setCategories, setColor } =
+// ⚡ ৩. অ্যাকশন হিসেবে setBrands-কে এক্সপোর্ট করা হলো
+export const { setProducts, setLoading, setError, setCategories, setColor, setBrands } =
   productSlice.actions;
 export default productSlice.reducer;

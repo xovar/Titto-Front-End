@@ -15,4 +15,8 @@ export const products = {
     const response = await axios.get(`${BASE_URL}/colors`);
     return response.data;
   },
+  fetchBrands: async () => {
+    const response = await axios.get(`${BASE_URL}/brands`);
+    return response.data;
+  },
 };

@@ -7,12 +7,14 @@ import ProductSortBar from '../../Components/Shared/ProductSortBar';
 import Pagination from '../../Components/Shared/Pagination';
 
 export default function Men() {
-  const { items: products, categories, colors, loading } = useSelector((state) => state.products);
-  console.log(products, categories, colors);
+  // ⚡ ১. রেডাক্স স্টেট থেকে brands তুলে আনা হলো
+  const { items: products, categories, colors, brands, loading } = useSelector((state) => state.products);
+  console.log(products, categories, colors, brands);
+  
   const categoriesList = categories;
   const sizesList = ['All', '39', '40', '41', '42', '43', '44', '45'];
-  
   const colorsList = colors;
+  const brandsList = brands; // ⚡ ব্র্যান্ডের লিস্ট আলাদা ভ্যারিয়েবলে রাখা হলো
 
   // --- STATE MANAGEMENT ---
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,6 +26,7 @@ export default function Men() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSize, setSelectedSize] = useState('All');
   const [selectedColor, setSelectedColor] = useState('All');
+  const [selectedBrand, setSelectedBrand] = useState('All'); // ⚡ ২. ব্র্যান্ডের জন্য নতুন স্টেট
 
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); 
@@ -50,8 +53,13 @@ export default function Men() {
       (product.variants && product.variants.some(variant => 
         variant.color && variant.color.name === selectedColor
       ));
+
+    // ⚡ ৫. নতুন ব্র্যান্ড ফিল্টার লজিক যুক্ত করা হলো
+    const matchesBrand = selectedBrand === 'All' || 
+      (product.brand && product.brand.id === selectedBrand);
     
-    return matchesPrice && matchesCategory && matchesSize && matchesColor;
+    // সব ফিল্টারের সাথে matchesBrand-ও রিটার্ন করা হলো
+    return matchesPrice && matchesCategory && matchesSize && matchesColor && matchesBrand;
   });
 
   // Sort Logic
@@ -90,6 +98,12 @@ export default function Men() {
     setCurrentPage(1);
   };
 
+  // ⚡ ব্র্যান্ড পরিবর্তনের হ্যান্ডলার
+  const handleBrandChange = (brandId) => {
+    setSelectedBrand(brandId);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="max-w-360 mx-auto px-4 md:px-8 py-10 font-sans text-neutral-800 bg-[#fafafa]">
       
@@ -109,6 +123,7 @@ export default function Men() {
       <div className="flex flex-col lg:flex-row gap-8">
         
         {/* SIDEBAR FILTERS COMPONENT */}
+        {/* ⚡ এখানে ৩টি নতুন প্রপস (brandsList, selectedBrand, handleBrandChange) পাঠানো হয়েছে */}
         <FiltersSidebar 
           isFilterMenuOpen={isFilterMenuOpen}
           categoriesList={categoriesList}
@@ -123,6 +138,9 @@ export default function Men() {
           sizesList={sizesList}
           selectedSize={selectedSize}
           handleSizeChange={handleSizeChange}
+          brandsList={brandsList} 
+          selectedBrand={selectedBrand} 
+          handleBrandChange={handleBrandChange} 
         />
 
         {/* RIGHT MAIN CONTENT */}
@@ -138,11 +156,10 @@ export default function Men() {
             setCurrentPage={setCurrentPage}
           />
 
-          {/* DYNAMIC PRODUCT CONTAINER (LOADING CONDITION ADDED HERE) */}
+          {/* DYNAMIC PRODUCT CONTAINER */}
           <div className={`mb-10 w-full ${viewMode === 'grid' && !loading ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-6'}`}>
             
             {loading ? (
-              /* ⏳ যখন রেডাক্স loading ট্রু থাকবে তখন এই সুন্দর স্পিনারটি দেখাবে */
               <div className="flex flex-col items-center justify-center py-20 w-full col-span-full bg-white border border-neutral-200 rounded-xl shadow-sm">
                 <span className="loading loading-spinner loading-lg text-[#ea4c3b]"></span>
                 <p className="text-sm text-neutral-400 font-bold uppercase mt-4 tracking-wider">Loading products...</p>
@@ -153,7 +170,7 @@ export default function Men() {
               ))
             ) : (
               <p className="text-neutral-500 col-span-full text-center py-10 bg-white border border-neutral-200 rounded-xl shadow-sm">
-                No products match your selected filters. Try changing category, size, color, or increasing the price.
+                No products match your selected filters. Try changing category, brand, size, color, or increasing the price.
               </p>
             )}
             

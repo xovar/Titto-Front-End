@@ -12,6 +12,9 @@ export default function FiltersSidebar({
   sizesList,
   selectedSize,
   handleSizeChange,
+  brandsList = [],       // ⚡ নতুন প্রপস রিসিভ করা হলো (ডিফল্ট খালি অ্যারে)
+  selectedBrand,         // ⚡ নতুন প্রপস
+  handleBrandChange,     // ⚡ নতুন প্রপস
 }) {
   return (
     <aside
@@ -34,7 +37,7 @@ export default function FiltersSidebar({
               key={cat.id}
               onClick={() => handleCategoryChange(cat.id)}
               className={`flex justify-between cursor-pointer transition-colors ${
-                selectedCategory === cat
+                selectedCategory === cat.id // 💡 ফিক্সড: cat এর জায়গায় cat.id চেক হবে
                   ? "text-[#ea4c3b] font-bold"
                   : "text-neutral-500 hover:text-[#ea4c3b]"
               }`}
@@ -48,7 +51,7 @@ export default function FiltersSidebar({
       {/* Price Filter */}
       <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
         <h3 className="font-bold mb-4 text-sm">
-          Price Filter: Up to ${maxPrice}
+          Price Filter: Up to ৳{maxPrice}
         </h3>
         <div className="flex justify-between text-xs text-neutral-500 mb-2">
           <span>৳100</span>
@@ -111,6 +114,36 @@ export default function FiltersSidebar({
               }`}
             >
               <span>{size}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* ⚡ Brands Filter (নতুন যোগ করা হলো) */}
+      <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+        <h3 className="font-bold mb-4 text-sm">Brands</h3>
+        <ul className="space-y-3 text-sm">
+          <li
+            onClick={() => handleBrandChange("All")}
+            className={`flex justify-between cursor-pointer transition-colors ${
+              selectedBrand === "All"
+                ? "text-[#ea4c3b] font-bold"
+                : "text-neutral-500 hover:text-[#ea4c3b]"
+            }`}
+          >
+            <span>All Brands</span>
+          </li>
+          {brandsList.map((brand) => (
+            <li
+              key={brand.id}
+              onClick={() => handleBrandChange(brand.id)}
+              className={`flex justify-between cursor-pointer transition-colors ${
+                selectedBrand === brand.id
+                  ? "text-[#ea4c3b] font-bold"
+                  : "text-neutral-500 hover:text-[#ea4c3b]"
+              }`}
+            >
+              <span>{brand.name}</span>
             </li>
           ))}
         </ul>
