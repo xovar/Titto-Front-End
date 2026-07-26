@@ -1,9 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 // ⚡ useDispatch ইমপোর্ট করা হলো
-import { useSelector, useDispatch } from "react-redux"; 
-// 📦 আপনার প্রোজেক্টের কার্ট স্লাইস থেকে addToCart অ্যাকশনটি ইমপোর্ট করুন (পাথটি আপনার প্রোজেক্ট অনুযায়ী চেক করে নিন)
- 
+import { useSelector, useDispatch } from "react-redux";
+// 📦 আপনার প্রোজেক্টের কার্ট স্লাইস থেকে addToCart অ্যাকশনটি ইমপোর্ট করুন
 
 import {
   FiHeart,
@@ -20,17 +19,32 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { addToCart } from "../../store/features/cart/cartSlice";
+import axios from "axios";
 
 export default function SingleProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch(); // ⚡ রিডাক্স ডিসপ্যাচ ইনিশিয়েলাইজ করা হলো
+  const dispatch = useDispatch();
 
   // ⚡ ১. রিডাক্স স্টোর থেকে রিয়েল ডাটা এবং লোডিং স্টেট আনা
   const { items: products, loading } = useSelector((state) => state.products);
   const product = useMemo(() => {
     return products?.find((p) => p.id === id);
   }, [products, id]);
+
+  useEffect(() => {
+    // ১. ID এবং product নিশ্চিত থাকলে তবেই এপিআই কল হবে
+    if (id) {
+      axios
+        .patch(`https://api.titto.com.bd/api/products/${id}/view`)
+        .then((res) => {
+          console.log("View count updated successfully:", res.data);
+        })
+        .catch((err) => {
+          console.error("Failed to update view count:", err);
+        });
+    }
+  }, [id]);
 
   const [quantity, setQuantity] = useState(1);
   const [swiperRef, setSwiperRef] = useState(null);
@@ -87,12 +101,20 @@ export default function SingleProduct() {
   const incrementQty = () => setQuantity((prev) => prev + 1);
   const decrementQty = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
-  // ইমেজ এবং প্রাইস সেটআপ
+  // ⚡ ইমেজ এবং প্রাইস সেটআপ (ফিক্স করা হয়েছে)
   const displayImages = activeVariant?.images || [];
-  const numericPrice = Number(product?.price) || 0;
+
+  // ১. আসল দাম (Original Price)
+  const numericOriginalPrice = Number(product?.price) || 0;
+
+  // ২. ছাড়ের পার্সেন্টেজ (Discount Percentage)
   const discountPercent = Number(product?.discount) || 0;
-  const numericOriginalPrice =
-    discountPercent > 0 ? numericPrice / (1 - discountPercent / 100) : 0;
+
+  // ৩. ছাড়ের পরের বিক্রয়মূল্য (Selling Price Calculation)
+  const numericPrice =
+    discountPercent > 0
+      ? Number((numericOriginalPrice * (1 - discountPercent / 100)).toFixed(0))
+      : numericOriginalPrice;
 
   // 🔍 Magnifier Box লজিক
   const handleMouseMove = (e) => {
@@ -140,18 +162,16 @@ export default function SingleProduct() {
       color: selectedColor,
       price: numericPrice,
       image: displayImages[0] || "https://via.placeholder.com/150",
-      category: product.category?.name || ""
+      category: product.category?.name || "",
     };
 
     if (actionType === "cart") {
-      dispatch(addToCart(orderPayload)); 
+      dispatch(addToCart(orderPayload));
       toast.success(`${quantity}x ${product?.name} added to cart!`);
     } else if (actionType === "buy_now") {
       toast.info(`Proceeding to buy ${quantity}x ${product?.name}!`);
       navigate("/checkout", { state: { checkoutItem: orderPayload } });
     }
-
-    console.log(`${actionType} payload:`, orderPayload);
   };
 
   /* ⏳ কন্ডিশন ১: যদি রিডাক্স ডাটা ব্যাকএন্ড থেকে লোড হতে থাকে */
@@ -166,7 +186,7 @@ export default function SingleProduct() {
     );
   }
 
-  /* ❌ কন্ডিশন ২: লোডিং শেষ কিন্তু প্রোডাক্ট খুঁজে পাওয়া যায়নি */
+  /* ❌ কন্ডিশন ২: লোডিং শেষ কিন্তু প্রোডাক্ট খুঁজে পাওয়া যায়নি */
   if (!product) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 bg-white">
@@ -302,7 +322,7 @@ export default function SingleProduct() {
           {/* Price & Views */}
           <div className="flex items-center gap-4 mb-4">
             <div className="flex items-center text-xl font-black">
-              {numericOriginalPrice > 0 && (
+              {discountPercent > 0 && numericOriginalPrice > 0 && (
                 <span className="text-neutral-400 line-through font-normal mr-3 text-base">
                   ৳{numericOriginalPrice.toFixed(0)}
                 </span>
@@ -363,23 +383,26 @@ export default function SingleProduct() {
                 </span>
               </label>
               <div className="flex flex-wrap gap-2">
-                {availableSizes.map((size) => {
-                  const isSelected = currentSizeToShow === size;
-                  return (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setUserSelectedSize(size)}
-                      className={`h-10 min-w-10 px-3.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
-                        isSelected
-                          ? "bg-neutral-900 text-white border border-neutral-900 shadow-sm"
-                          : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  );
-                })}
+                {availableSizes
+                  .slice()
+                  .sort((a, b) => Number(a) - Number(b))
+                  .map((size) => {
+                    const isSelected = currentSizeToShow === size;
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setUserSelectedSize(size)}
+                        className={`h-10 min-w-10 px-3.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
+                          isSelected
+                            ? "bg-neutral-900 text-white border border-neutral-900 shadow-sm"
+                            : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -416,7 +439,15 @@ export default function SingleProduct() {
               type="button"
               className="cursor-pointer hover:opacity-80 flex items-center gap-1.5 bg-transparent border-0 p-0"
             >
-              <svg className="w-4 h-4 text-neutral-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                className="w-4 h-4 text-neutral-800"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M3 9h18v6H3z" />
                 <path d="M6 9v3M9 9v2M12 9v3M15 9v2M18 9v3" />
               </svg>
@@ -426,7 +457,15 @@ export default function SingleProduct() {
               type="button"
               className="cursor-pointer hover:opacity-80 flex items-center gap-1.5 bg-transparent border-0 p-0"
             >
-              <svg className="w-4 h-4 text-neutral-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                className="w-4 h-4 text-neutral-800"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M5 4h14l1 7H4z" />
                 <path d="M4 11h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
                 <path d="M9 14h6" />
@@ -438,12 +477,22 @@ export default function SingleProduct() {
           {/* LIVE TRACKING DATA BOX */}
           <div className="border border-neutral-300 rounded-2xs p-3 bg-white text-xs text-neutral-900 space-y-2.5 mb-5 max-w-md w-full font-normal pt-2">
             <div className="flex items-center gap-2">
-              <span className="text-emerald-500 font-bold text-sm select-none">🗹</span>
-              <span><strong>Viewed:</strong> 232 people recently VIEWED this product.</span>
+              <span className="text-emerald-500 font-bold text-sm select-none">
+                🗹
+              </span>
+              <span>
+                <strong>Viewed:</strong> {product.viewed || 0} people recently
+                VIEWED this product.
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-black font-bold text-sm select-none">🔥</span>
-              <span><strong>Popular:</strong> 5 people have BOUGHT this product.</span>
+              <span className="text-black font-bold text-sm select-none">
+                🔥
+              </span>
+              <span>
+                <strong>Popular:</strong> {product.sold || 0} people have BOUGHT
+                this product.
+              </span>
             </div>
           </div>
 

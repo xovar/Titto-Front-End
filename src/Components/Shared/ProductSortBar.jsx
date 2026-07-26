@@ -2,8 +2,6 @@
 
 export default function ProductSortBar({
   totalItems,
-  viewMode,
-  setViewMode,
   sortOption,
   setSortOption,
   setCurrentPage,
@@ -17,7 +15,7 @@ export default function ProductSortBar({
       <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
         
         {/* VIEW TOGGLES */}
-        <div className="flex gap-2 text-neutral-400">
+        {/* <div className="flex gap-2 text-neutral-400">
           <button 
             onClick={() => setViewMode('grid')}
             className={`transition-colors ${viewMode === 'grid' ? 'text-[#ea4c3b]' : 'hover:text-neutral-600'}`}
@@ -34,7 +32,7 @@ export default function ProductSortBar({
               <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
             </svg>
           </button>
-        </div>
+        </div> */}
         
         {/* Sort Dropdown */}
         <div className="flex items-center gap-2 text-sm">

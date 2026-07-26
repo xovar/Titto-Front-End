@@ -6,6 +6,7 @@ import SingleProductDetail from "../Components/Shared/SingleProductDetail";
 import Checkout from "../Components/Shared/Checkout";
 import Cart from "../Components/Shared/Cart";
 import Wishlist from "../Components/Shared/Wishlist";
+import Women from "../Pages/Women/Women";
 //import NotFound from '../pages/NotFound';
 
 export const router = createBrowserRouter([
@@ -21,6 +22,10 @@ export const router = createBrowserRouter([
       {
         path: "/men",
         element: <Men />,
+      },
+      {
+        path: '/women',
+        element: <Women />
       },
       {
         path: "/product/:id",
