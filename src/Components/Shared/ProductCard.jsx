@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"; 
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -65,12 +65,12 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   // 🔍 ৪. সিলেক্টেড কালার এবং সাইজের লাইভ স্টক হিসাব করা
   const currentStock = useMemo(() => {
     if (!activeVariant || !activeVariant.sizes) return 0;
-    
+
     // একটিভ ভ্যারিয়েন্টের ভেতর থেকে ইউজারের সিলেক্ট করা সাইজ অবজেক্টটি খোঁজা হচ্ছে
     const sizeObj = activeVariant.sizes.find(
-      (s) => s.size === currentSizeToShow
+      (s) => s.size === currentSizeToShow,
     );
-    
+
     return sizeObj ? sizeObj.stock : 0;
   }, [activeVariant, currentSizeToShow]);
 
@@ -80,7 +80,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
   // ⚡ কার্ডে ক্লিক করলে ডিটেইলস পেজে যাওয়ার হ্যান্ডলার
   const handleCardClick = () => {
-    navigate(`/product/${product.id}`); 
+    navigate(`/product/${product.id}`);
   };
 
   const isList = viewMode === "list";
@@ -88,20 +88,24 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   const displayImages = activeVariant?.images ||
     product.images || ["https://via.placeholder.com/400x400?text=Product"];
 
-  const numericPrice = Number(product.price) || 0;
-  const discountPercent = Number(product.discount) || 0;
-  const numericOriginalPrice = product.originalPrice
-    ? Number(product.originalPrice)
-    : discountPercent > 0
-      ? numericPrice / (1 - discountPercent / 100)
-      : 0;
+ // ১. আসল দাম (Original Price) - যা product.price এ আছে
+const numericOriginalPrice = Number(product.price) || 0;
+
+// ২. ডিসকাউন্ট পার্সেন্টেজ
+const discountPercent = Number(product.discount) || 0;
+
+// ৩. বর্তমান বিক্রয়মূল্য (Calculated Price) - ডিসকাউন্ট থাকলে ছাড়ের পর যা হবে, না থাকলে আসল দাম
+const numericPrice = discountPercent > 0
+  ? Number((numericOriginalPrice * (1 - discountPercent / 100)).toFixed(0))
+  : numericOriginalPrice;
 
   // ⚡ মোডাল সাবমিশন হ্যান্ডলার (Buy Now এবং Add to Cart দুটোই হ্যান্ডেল করবে)
   const handleAddToCartSubmit = (modalData) => {
     const itemToCheckout = {
       id: product.id,
       name: product.name,
-      image: activeVariant?.images?.[0] || product.images?.[0] || displayImages[0],
+      image:
+        activeVariant?.images?.[0] || product.images?.[0] || displayImages[0],
       price: modalData.finalPrice / modalData.quantity,
       quantity: modalData.quantity,
       size: modalData.size,
@@ -110,10 +114,10 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
     if (modalData.action === "buy_now") {
       setIsModalOpen(false);
-      navigate("/checkout", { 
-        state: { checkoutItem: itemToCheckout } 
+      navigate("/checkout", {
+        state: { checkoutItem: itemToCheckout },
       });
-      return; 
+      return;
     }
 
     console.log("Added to cart payload submission:", {
@@ -179,7 +183,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             className={`btn btn-wide cursor-pointer ${currentStock === 0 ? "btn-disabled bg-neutral-800 text-neutral-500 border-none" : ""}`}
             disabled={currentStock === 0}
             onClick={(e) => {
-              e.stopPropagation(); 
+              e.stopPropagation();
               if (currentStock > 0) setIsModalOpen(true);
             }}
           >
@@ -252,7 +256,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                     type="button"
                     title={colorObj.name}
                     onClick={(e) => {
-                      e.stopPropagation(); 
+                      e.stopPropagation();
                       setSelectedColor(colorObj.name);
                     }}
                     style={{ backgroundColor: colorObj.code }}
@@ -273,26 +277,58 @@ export default function ProductCard({ product, viewMode = "grid" }) {
               Sizes:
             </span>
             <div className="flex flex-wrap gap-1">
-              {availableSizes.map((sizeValue) => {
-                const isSelected = currentSizeToShow === sizeValue;
-                return (
-                  <button
-                    key={sizeValue}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation(); 
-                      handleSizeClick(sizeValue);
-                    }}
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors cursor-pointer ${
-                      isSelected
-                        ? "bg-neutral-900 border-neutral-900 text-white"
-                        : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-400"
-                    }`}
-                  >
-                    {sizeValue}
-                  </button>
-                );
-              })}
+              {/* ⚡ সাইজগুলোকে ছোট থেকে বড় ক্রমে সাজানোর লজিক */}
+              {[...availableSizes]
+                .sort((a, b) => {
+                  const numA = parseFloat(a);
+                  const numB = parseFloat(b);
+
+                  // ১. যদি দুটিই সংখ্যা হয় (যেমন: 40, 41, 42)
+                  if (!isNaN(numA) && !isNaN(numB)) {
+                    return numA - numB;
+                  }
+
+                  // ২. যদি টেক্সট সাইজ হয় (S, M, L, XL ইত্যাদি)
+                  const sizeOrder = [
+                    "xs",
+                    "s",
+                    "m",
+                    "l",
+                    "xl",
+                    "2xl",
+                    "3xl",
+                    "4xl",
+                  ];
+                  const indexA = sizeOrder.indexOf(String(a).toLowerCase());
+                  const indexB = sizeOrder.indexOf(String(b).toLowerCase());
+
+                  if (indexA !== -1 && indexB !== -1) {
+                    return indexA - indexB;
+                  }
+
+                  // ৩. সাধারণ স্ট্রিং অ্যালফাবেটিকাল শর্টিং
+                  return String(a).localeCompare(String(b));
+                })
+                .map((sizeValue) => {
+                  const isSelected = currentSizeToShow === sizeValue;
+                  return (
+                    <button
+                      key={sizeValue}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSizeClick(sizeValue);
+                      }}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors cursor-pointer ${
+                        isSelected
+                          ? "bg-neutral-900 border-neutral-900 text-white"
+                          : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-400"
+                      }`}
+                    >
+                      {sizeValue}
+                    </button>
+                  );
+                })}
             </div>
           </div>
 

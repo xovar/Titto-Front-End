@@ -7,14 +7,13 @@ import ProductSortBar from '../../Components/Shared/ProductSortBar';
 import Pagination from '../../Components/Shared/Pagination';
 
 export default function Men() {
-  // ⚡ ১. রেডাক্স স্টেট থেকে brands তুলে আনা হলো
+  // ⚡ ১. রেডাক্স স্টেট থেকে products, categories, colors, brands তুলে আনা হলো
   const { items: products, categories, colors, brands, loading } = useSelector((state) => state.products);
-  console.log(products, categories, colors, brands);
   
   const categoriesList = categories;
   const sizesList = ['All', '39', '40', '41', '42', '43', '44', '45'];
   const colorsList = colors;
-  const brandsList = brands; // ⚡ ব্র্যান্ডের লিস্ট আলাদা ভ্যারিয়েবলে রাখা হলো
+  const brandsList = brands;
 
   // --- STATE MANAGEMENT ---
   const [currentPage, setCurrentPage] = useState(1);
@@ -26,7 +25,7 @@ export default function Men() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSize, setSelectedSize] = useState('All');
   const [selectedColor, setSelectedColor] = useState('All');
-  const [selectedBrand, setSelectedBrand] = useState('All'); // ⚡ ২. ব্র্যান্ডের জন্য নতুন স্টেট
+  const [selectedBrand, setSelectedBrand] = useState('All');
 
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); 
@@ -34,6 +33,10 @@ export default function Men() {
   // --- LOGIC: FILTER ---
   let processedProducts = products.filter(product => {
     
+    // ⚡ 0. জেন্ডার চেক (1 = Male)
+    // String বা Number যেকোনো ফরম্যাটে আসলেও যাতে ম্যাচ করে
+    const matchesGender = Number(product.gender) === 1;
+
     // ১. প্রাইস চেক
     const numericPrice = Number(product.price) || 0;
     const matchesPrice = numericPrice <= maxPrice;
@@ -54,12 +57,12 @@ export default function Men() {
         variant.color && variant.color.name === selectedColor
       ));
 
-    // ⚡ ৫. নতুন ব্র্যান্ড ফিল্টার লজিক যুক্ত করা হলো
+    // ৫. ব্র্যান্ড ফিল্টার লজিক
     const matchesBrand = selectedBrand === 'All' || 
       (product.brand && product.brand.id === selectedBrand);
     
-    // সব ফিল্টারের সাথে matchesBrand-ও রিটার্ন করা হলো
-    return matchesPrice && matchesCategory && matchesSize && matchesColor && matchesBrand;
+    // সব শর্তের সাথে matchesGender-ও চেক করা হলো
+    return matchesGender && matchesPrice && matchesCategory && matchesSize && matchesColor && matchesBrand;
   });
 
   // Sort Logic
@@ -98,7 +101,6 @@ export default function Men() {
     setCurrentPage(1);
   };
 
-  // ⚡ ব্র্যান্ড পরিবর্তনের হ্যান্ডলার
   const handleBrandChange = (brandId) => {
     setSelectedBrand(brandId);
     setCurrentPage(1);
@@ -123,7 +125,6 @@ export default function Men() {
       <div className="flex flex-col lg:flex-row gap-8">
         
         {/* SIDEBAR FILTERS COMPONENT */}
-        {/* ⚡ এখানে ৩টি নতুন প্রপস (brandsList, selectedBrand, handleBrandChange) পাঠানো হয়েছে */}
         <FiltersSidebar 
           isFilterMenuOpen={isFilterMenuOpen}
           categoriesList={categoriesList}
