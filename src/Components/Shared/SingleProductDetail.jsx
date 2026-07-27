@@ -1,8 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-// ⚡ useDispatch ইমপোর্ট করা হলো
 import { useSelector, useDispatch } from "react-redux";
-// 📦 আপনার প্রোজেক্টের কার্ট স্লাইস থেকে addToCart অ্যাকশনটি ইমপোর্ট করুন
 
 import {
   FiHeart,
@@ -10,6 +8,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiArrowLeft,
+  FiX,
 } from "react-icons/fi";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
@@ -26,6 +25,9 @@ export default function SingleProduct() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // ⚡ Size Guide Modal State
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+
   // ⚡ ১. রিডাক্স স্টোর থেকে রিয়েল ডাটা এবং লোডিং স্টেট আনা
   const { items: products, loading } = useSelector((state) => state.products);
   const product = useMemo(() => {
@@ -33,16 +35,8 @@ export default function SingleProduct() {
   }, [products, id]);
 
   useEffect(() => {
-    // ১. ID এবং product নিশ্চিত থাকলে তবেই এপিআই কল হবে
     if (id) {
-      axios
-        .patch(`https://api.titto.com.bd/api/products/${id}/view`)
-        .then((res) => {
-          console.log("View count updated successfully:", res.data);
-        })
-        .catch((err) => {
-          console.error("Failed to update view count:", err);
-        });
+      axios.patch(`https://api.titto.com.bd/api/products/${id}/view`);
     }
   }, [id]);
 
@@ -65,11 +59,11 @@ export default function SingleProduct() {
       .filter((c) => c && c.name && c.code)
       .filter(
         (value, index, self) =>
-          self.findIndex((t) => t.name === value.name) === index,
+          self.findIndex((t) => t.name === value.name) === index
       );
   }, [product]);
 
-  // ⚡ ৩. ক্যাসকেডিং রেন্ডার এড়াতে Derived State
+  // ⚡ ৩. Derived State for Selected Color
   const [userSelectedColor, setUserSelectedColor] = useState("");
   const selectedColor = userSelectedColor || availableColors[0]?.name || "";
 
@@ -98,28 +92,35 @@ export default function SingleProduct() {
     ? userSelectedSize
     : "";
 
+  // ⚡ কালার চেঞ্জ হ্যান্ডলার
+  const handleColorChange = (colorName) => {
+    setUserSelectedColor(colorName);
+    setActiveImageIndex(0);
+    setIsZoomed(false);
+    if (swiperRef) {
+      swiperRef.slideTo(0);
+    }
+  };
+
   const incrementQty = () => setQuantity((prev) => prev + 1);
   const decrementQty = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
-  // ⚡ ইমেজ এবং প্রাইস সেটআপ (ফিক্স করা হয়েছে)
+  // ⚡ ইমেজ এবং প্রাইস সেটআপ
   const displayImages = activeVariant?.images || [];
+  const currentActiveImage = displayImages[activeImageIndex] || displayImages[0] || "";
 
-  // ১. আসল দাম (Original Price)
   const numericOriginalPrice = Number(product?.price) || 0;
-
-  // ২. ছাড়ের পার্সেন্টেজ (Discount Percentage)
   const discountPercent = Number(product?.discount) || 0;
-
-  // ৩. ছাড়ের পরের বিক্রয়মূল্য (Selling Price Calculation)
   const numericPrice =
     discountPercent > 0
       ? Number((numericOriginalPrice * (1 - discountPercent / 100)).toFixed(0))
       : numericOriginalPrice;
 
-  // 🔍 Magnifier Box লজিক
+  // 🔍 সংশোধিত Magnifier Box লজিক
   const handleMouseMove = (e) => {
-    const { left, top, width, height } =
-      e.currentTarget.getBoundingClientRect();
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    
+    // কার্সরের পজিশন
     let x = e.clientX - left;
     let y = e.clientY - top;
 
@@ -127,6 +128,7 @@ export default function SingleProduct() {
     let lensX = x - lensSize / 2;
     let lensY = y - lensSize / 2;
 
+    // বাউন্ডারি লক
     if (lensX < 0) lensX = 0;
     if (lensX > width - lensSize) lensX = width - lensSize;
     if (lensY < 0) lensY = 0;
@@ -134,8 +136,9 @@ export default function SingleProduct() {
 
     setLensPos({ x: lensX, y: lensY });
 
-    const zoomX = (lensX / (width - lensSize)) * 100;
-    const zoomY = (lensY / (height - lensSize)) * 100;
+    // ব্যাকগ্রাউন্ড জুমিং পজিশনিং (নিখুঁত করার জন্য)
+    const zoomX = (x / width) * 100;
+    const zoomY = (y / height) * 100;
 
     setZoomPos({ x: zoomX, y: zoomY });
     setIsZoomed(true);
@@ -203,81 +206,88 @@ export default function SingleProduct() {
     );
   }
 
-  // 📦 কন্ডিশন ৩: ডাটা সাকসেসফুলি চলে এসেছে, এখন UI রেন্ডার হবে
   return (
-    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative">
       <div className="flex flex-col lg:flex-row gap-12 items-start">
         {/* Left Column: Image Area & Grid Thumbnails */}
         <div className="w-full lg:w-1/2 flex flex-col gap-4">
-          <div className="w-full aspect-square border border-neutral-200 rounded-2xl relative flex items-center justify-center overflow-hidden bg-white">
+          <div 
+            className="w-full aspect-square border border-neutral-200 rounded-2xl relative flex items-center justify-center overflow-hidden bg-white cursor-zoom-in"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setIsZoomed(false)}
+          >
             <Swiper
               onSwiper={setSwiperRef}
               key={`single-${product.id}-${selectedColor}`}
               modules={[Navigation, Pagination, A11y, Autoplay]}
               spaceBetween={0}
               slidesPerView={1}
-              onSlideChange={(swiper) =>
-                setActiveImageIndex(swiper.activeIndex)
-              }
-              className="w-full h-full"
+              onSlideChange={(swiper) => {
+                setActiveImageIndex(swiper.activeIndex);
+                setIsZoomed(false);
+              }}
+              className="w-full h-full pointer-events-none" // pointer-events-none যাতে জুম ট্র্যাকিং এ বাধা না দেয়
             >
               {displayImages.map((imgUrl, idx) => (
                 <SwiperSlide
                   key={`main-img-${idx}`}
                   className="flex items-center justify-center p-6 bg-white"
                 >
-                  <div
-                    className="w-full h-full relative overflow-hidden flex items-center justify-center cursor-zoom-in"
-                    onMouseMove={handleMouseMove}
-                    onMouseLeave={() => setIsZoomed(false)}
-                  >
-                    <img
-                      src={imgUrl}
-                      alt={product.name}
-                      className="w-full h-full object-contain max-h-120 mx-auto"
-                    />
-
-                    {isZoomed && (
-                      <div
-                        className="absolute border border-neutral-300 bg-white/10 pointer-events-none shadow-sm"
-                        style={{
-                          width: "120px",
-                          height: "120px",
-                          left: `${lensPos.x}px`,
-                          top: `${lensPos.y}px`,
-                        }}
-                      />
-                    )}
-
-                    {isZoomed && (
-                      <div
-                        className="absolute inset-0 z-40 border border-neutral-200 bg-white shadow-2xl pointer-events-none rounded-2xl"
-                        style={{
-                          backgroundImage: `url(${imgUrl})`,
-                          backgroundSize: "280%",
-                          backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
-                          backgroundRepeat: "no-repeat",
-                        }}
-                      />
-                    )}
-                  </div>
+                  <img
+                    src={imgUrl}
+                    alt={product.name}
+                    className="w-full h-full object-contain max-h-120 mx-auto"
+                  />
                 </SwiperSlide>
               ))}
             </Swiper>
 
+            {/* 🔍 Magnifier Glass Lens */}
+            {isZoomed && (
+              <div
+                className="absolute border border-neutral-300 bg-black/5 pointer-events-none z-30 shadow-sm"
+                style={{
+                  width: "120px",
+                  height: "120px",
+                  left: `${lensPos.x}px`,
+                  top: `${lensPos.y}px`,
+                }}
+              />
+            )}
+
+            {/* 🔍 Full Box Zoom Window */}
+            {isZoomed && currentActiveImage && (
+              <div
+                className="absolute inset-0 z-40 border border-neutral-200 bg-white shadow-2xl pointer-events-none rounded-2xl"
+                style={{
+                  backgroundImage: `url("${currentActiveImage}")`,
+                  backgroundSize: "220%",
+                  backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+            )}
+
+            {/* Slider Navigation Buttons */}
             {displayImages.length > 1 && !isZoomed && (
               <>
                 <button
                   type="button"
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 hover:bg-neutral-900 hover:text-white transition-all duration-200"
-                  onClick={() => swiperRef?.slidePrev()}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-80 hover:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200 pointer-events-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    swiperRef?.slidePrev();
+                  }}
                 >
                   <FiChevronLeft className="w-5 h-5 stroke-[2.2]" />
                 </button>
                 <button
                   type="button"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-0 hover:bg-neutral-900 hover:text-white transition-all duration-200"
-                  onClick={() => swiperRef?.slideNext()}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-80 hover:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200 pointer-events-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    swiperRef?.slideNext();
+                  }}
                 >
                   <FiChevronRight className="w-5 h-5 stroke-[2.2]" />
                 </button>
@@ -327,14 +337,9 @@ export default function SingleProduct() {
                   ৳{numericOriginalPrice.toFixed(0)}
                 </span>
               )}
-              <span className="text-[#ea4c3b] text-2xl">
+              <span className="text-2xl">
                 ৳{numericPrice.toFixed(0)}
               </span>
-            </div>
-            <div className="h-4 w-px bg-neutral-300" />
-            <div className="flex items-center gap-1 text-sm text-neutral-500">
-              <span className="text-yellow-400 text-base">★★★★★</span>
-              <span>({product.viewed || 0} views)</span>
             </div>
           </div>
 
@@ -358,7 +363,7 @@ export default function SingleProduct() {
                     <button
                       key={colorObj.name}
                       type="button"
-                      onClick={() => setUserSelectedColor(colorObj.name)}
+                      onClick={() => handleColorChange(colorObj.name)}
                       style={{ backgroundColor: colorObj.code }}
                       className={`w-7 h-7 rounded-full cursor-pointer transition-all duration-200 hover:scale-110 relative ${
                         isSelected
@@ -437,6 +442,7 @@ export default function SingleProduct() {
           <div className="flex gap-5 text-xs font-medium text-neutral-800 mb-4 select-none pt-2">
             <button
               type="button"
+              onClick={() => setIsSizeGuideOpen(true)}
               className="cursor-pointer hover:opacity-80 flex items-center gap-1.5 bg-transparent border-0 p-0"
             >
               <svg
@@ -452,25 +458,6 @@ export default function SingleProduct() {
                 <path d="M6 9v3M9 9v2M12 9v3M15 9v2M18 9v3" />
               </svg>
               Size guide
-            </button>
-            <button
-              type="button"
-              className="cursor-pointer hover:opacity-80 flex items-center gap-1.5 bg-transparent border-0 p-0"
-            >
-              <svg
-                className="w-4 h-4 text-neutral-800"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 4h14l1 7H4z" />
-                <path d="M4 11h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
-                <path d="M9 14h6" />
-              </svg>
-              Care guide
             </button>
           </div>
 
@@ -534,6 +521,110 @@ export default function SingleProduct() {
           </div>
         </div>
       </div>
+
+      {/* ⚡ SIZE GUIDE MODAL POPUP */}
+      {isSizeGuideOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div
+            className="absolute inset-0"
+            onClick={() => setIsSizeGuideOpen(false)}
+          />
+
+          <div className="relative bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden z-10 flex flex-col my-auto border border-neutral-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
+              <h3 className="text-xl font-bold text-neutral-900">Size guide</h3>
+              <button
+                type="button"
+                onClick={() => setIsSizeGuideOpen(false)}
+                className="text-neutral-500 hover:text-black p-1 transition-colors cursor-pointer"
+              >
+                <FiX className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[80vh] space-y-6">
+              <div className="relative w-full h-44 sm:h-52 rounded-lg overflow-hidden bg-neutral-100 border border-neutral-200">
+                <img
+                  src="https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=1000&auto=format&fit=crop"
+                  alt="Style without compromise"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/20 flex flex-col justify-end p-4 text-right">
+                  <h4 className="text-white text-2xl font-black uppercase tracking-tight leading-none drop-shadow-md">
+                    Style <span className="text-red-500 font-light italic">without</span>
+                  </h4>
+                  <p className="text-white text-xl font-extrabold tracking-wider drop-shadow-md">
+                    COMPROMISE
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-lg font-black text-black tracking-tight uppercase">
+                  MEN
+                </h4>
+              </div>
+
+              <div className="border border-neutral-200 rounded-md overflow-hidden">
+                <table className="w-full text-center border-collapse">
+                  <thead>
+                    <tr className="bg-[#ff0000] text-white text-xs font-black uppercase tracking-wider">
+                      <th className="py-2.5 px-2 border-r border-red-600">
+                        Titto SIZE
+                      </th>
+                      <th className="py-2.5 px-2 border-r border-red-600">
+                        UK / LOCAL SIZE
+                      </th>
+                      <th className="py-2.5 px-2">HEEL TO TOE (inches)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm font-bold text-neutral-800 divide-y divide-neutral-200">
+                    <tr className="hover:bg-neutral-50">
+                      <td className="py-2 px-2 border-r border-neutral-200">39</td>
+                      <td className="py-2 px-2 border-r border-neutral-200">5</td>
+                      <td className="py-2 px-2">9.5</td>
+                    </tr>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="py-2 px-2 border-r border-neutral-200">40</td>
+                      <td className="py-2 px-2 border-r border-neutral-200">6</td>
+                      <td className="py-2 px-2">9.8</td>
+                    </tr>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="py-2 px-2 border-r border-neutral-200">41</td>
+                      <td className="py-2 px-2 border-r border-neutral-200">7</td>
+                      <td className="py-2 px-2">10</td>
+                    </tr>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="py-2 px-2 border-r border-neutral-200">42</td>
+                      <td className="py-2 px-2 border-r border-neutral-200">8</td>
+                      <td className="py-2 px-2">10.3</td>
+                    </tr>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="py-2 px-2 border-r border-neutral-200">43</td>
+                      <td className="py-2 px-2 border-r border-neutral-200">9</td>
+                      <td className="py-2 px-2">10.5</td>
+                    </tr>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="py-2 px-2 border-r border-neutral-200">44</td>
+                      <td className="py-2 px-2 border-r border-neutral-200">10</td>
+                      <td className="py-2 px-2">10.9</td>
+                    </tr>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="py-2 px-2 border-r border-neutral-200">45</td>
+                      <td className="py-2 px-2 border-r border-neutral-200">11</td>
+                      <td className="py-2 px-2">11.1</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <p className="text-[10px] text-center font-bold text-neutral-500 uppercase tracking-wide">
+                <span className="text-red-500">N.B.</span> FOOT MEASUREMENT MAY VARY BY +/- 2MM
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -88,16 +88,17 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   const displayImages = activeVariant?.images ||
     product.images || ["https://via.placeholder.com/400x400?text=Product"];
 
- // ১. আসল দাম (Original Price) - যা product.price এ আছে
-const numericOriginalPrice = Number(product.price) || 0;
+  // ১. আসল দাম (Original Price) - যা product.price এ আছে
+  const numericOriginalPrice = Number(product.price) || 0;
 
-// ২. ডিসকাউন্ট পার্সেন্টেজ
-const discountPercent = Number(product.discount) || 0;
+  // ২. ডিসকাউন্ট পার্সেন্টেজ
+  const discountPercent = Number(product.discount) || 0;
 
-// ৩. বর্তমান বিক্রয়মূল্য (Calculated Price) - ডিসকাউন্ট থাকলে ছাড়ের পর যা হবে, না থাকলে আসল দাম
-const numericPrice = discountPercent > 0
-  ? Number((numericOriginalPrice * (1 - discountPercent / 100)).toFixed(0))
-  : numericOriginalPrice;
+  // ৩. বর্তমান বিক্রয়মূল্য (Calculated Price) - ডিসকাউন্ট থাকলে ছাড়ের পর যা হবে, না থাকলে আসল দাম
+  const numericPrice =
+    discountPercent > 0
+      ? Number((numericOriginalPrice * (1 - discountPercent / 100)).toFixed(0))
+      : numericOriginalPrice;
 
   // ⚡ মোডাল সাবমিশন হ্যান্ডলার (Buy Now এবং Add to Cart দুটোই হ্যান্ডেল করবে)
   const handleAddToCartSubmit = (modalData) => {
@@ -349,13 +350,18 @@ const numericPrice = discountPercent > 0
 
           {/* Price Section */}
           <div className="flex items-center gap-2 text-sm mt-auto">
-            {numericOriginalPrice > 0 && (
-              <span className="text-neutral-400 line-through">
-                ${numericOriginalPrice.toFixed(2)}
+            {discountPercent > 0 && (
+              <span className="flex items-center text-[15px] text-[#929090] font-['Bangla'] font-bold">
+                <span className="text-[18px]">৳</span>
+                <span className="line-through ml-0.5">
+                  {numericOriginalPrice.toFixed(2)}
+                </span>
               </span>
             )}
-            <span className="text-[#ea4c3b] font-bold">
-              ${numericPrice.toFixed(2)}
+
+            <span className="flex items-center text-[15px] font-['Bangla'] font-bold">
+              <span className="text-[18px]">৳</span>
+              <span className="ml-0.5">{numericPrice.toFixed(2)}</span>
             </span>
           </div>
         </div>
