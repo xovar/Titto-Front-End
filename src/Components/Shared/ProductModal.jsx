@@ -143,9 +143,6 @@ const SizeGuideModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          <div>
-            <h4 className="text-lg font-black text-black tracking-tight uppercase">MEN</h4>
-          </div>
 
           <div className="border border-neutral-200 rounded-md overflow-hidden">
             <table className="w-full text-center border-collapse">
@@ -195,6 +192,8 @@ export default function ProductModal({
 }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  console.log(product);
 
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -496,13 +495,13 @@ export default function ProductModal({
               <div className="flex items-center gap-2">
                 <span className="text-emerald-500 font-bold text-sm select-none">🗹</span>
                 <span>
-                  <strong>Viewed:</strong> 232 people recently VIEWED this product.
+                  <strong>Viewed:</strong> {product.viewed || 0} people recently VIEWED this product.
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-black font-bold text-sm select-none">🔥</span>
                 <span>
-                  <strong>Popular:</strong> 5 people have BOUGHT this product.
+                  <strong>Popular:</strong> {product.sold || 0} people have BOUGHT this product.
                 </span>
               </div>
             </div>
