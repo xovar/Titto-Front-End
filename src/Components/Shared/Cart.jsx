@@ -5,7 +5,7 @@ import { FiMinus, FiPlus, FiX } from "react-icons/fi";
 // 👈 আপনার কার্ট স্লাইসের সঠিক পাথটি বসাবেন
 import { incrementQuantity, decrementQuantity, removeFromCart } from "/src/store/features/cart/cartSlice.js"; 
 
-const FREE_SHIPPING_THRESHOLD = 1500; 
+const FREE_SHIPPING_THRESHOLD = 3500; 
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -42,19 +42,24 @@ export default function Cart() {
   const progressPercent = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
 
   const handleCheckout = () => {
-    if (!agreedToTerms) {
-      alert("Please agree to the Terms and Conditions to proceed.");
-      return;
-    }
-    
-    // 💡 এখানে কোনো জোড়াতালি বা ডামি অবজেক্ট তৈরি না করে সরাসরি 
-    // পুরো cartItems অ্যারেটি স্টেট হিসেবে পাঠানো হচ্ছে।
-    navigate("/checkout", {
-      state: {
-        cartItems: cartItems, 
-      },
-    });
-  };
+  if (!agreedToTerms) {
+    alert("Please agree to the Terms and Conditions to proceed.");
+    return;
+  }
+  
+  // 🚚 ডেলিভারি ফ্রি কিনা চেক করা
+  const isFreeDelivery = subtotal >= FREE_SHIPPING_THRESHOLD;
+
+  navigate("/checkout", {
+    state: {
+      cartItems: cartItems,
+      subtotal: subtotal,
+      isFreeDelivery: isFreeDelivery, // 👈 এই ডেটাটি পাঠিয়ে দিন
+      // আপনি চাইলে ডিফল্ট ডেলিভারি চার্জও হিসাব করে পাঠাতে পারেন:
+      // shippingCost: isFreeDelivery ? 0 : 60 
+    },
+  });
+};
 
   if (cartItems.length === 0) {
     return (

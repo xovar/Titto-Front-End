@@ -3,14 +3,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FiHelpCircle, FiLock, FiChevronDown, FiChevronUp, FiShoppingBag, FiCheck } from "react-icons/fi";
 import OrderSummaryContent from "./OrderSummaryContent";
 
-// 📦 ১. রেডাক্স হুক এবং কার্ট স্লাইস থেকে clearCart অ্যাকশনটি ইমপোর্ট করুন
+// 📦 Redux Actions
 import { useDispatch } from "react-redux";
-import { clearCart } from "../../store/features/cart/cartSlice"; // 👈 আপনার প্রজেক্টের সঠিক পাথটি দিন
+import { clearCart } from "../../store/features/cart/cartSlice"; // 👈 আপনার প্রজেক্টের সঠিক পাথ দিন
 
 export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useDispatch(); // ⚡ ২. ডিসপ্যাচ মেথড ইনিশিয়ালাইজ করুন
+  const dispatch = useDispatch();
   
   // 📥 ডাটা রিসিভ
   const cartItems = location.state?.cartItems || [];
@@ -28,7 +28,7 @@ export default function Checkout() {
   const [formData, setFormData] = useState({
     emailOrMobile: "",
     newsletter: false,
-    country: "",
+    country: "Bangladesh", // 👈 ডিফল্ট Bangladesh দিয়ে দেওয়া হয়েছে
     firstName: "",
     lastName: "",
     address: "",
@@ -47,12 +47,15 @@ export default function Checkout() {
     billingPhone: "",
   });
 
-  // 🛑 সেফটি গার্ড
+  // 🛑 সেফটি গার্ড: কোনো আইটেম না থাকলে
   if (displayItems.length === 0 && !isOrderConfirmed) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
         <h2 className="text-xl font-bold text-neutral-700">No item selected for checkout!</h2>
-        <button onClick={() => navigate("/")} className="bg-black text-white px-6 py-2.5 rounded-md text-sm font-medium">
+        <button 
+          onClick={() => navigate("/")} 
+          className="bg-black text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-neutral-800 transition-colors"
+        >
           Go Shopping
         </button>
       </div>
@@ -61,9 +64,10 @@ export default function Checkout() {
 
   // 🧮 ক্যালকুলেশন
   const subtotal = displayItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const shippingCost = 0; 
-  const vat = Math.round(subtotal * 0.05); 
-  const total = subtotal + shippingCost + vat;
+  const shippingCost = shippingMethod === "inside" ? 150 : 150; // 👈 চাইলে ঢাকা ও ঢাকার বাইরে ডেলিভারি চার্জ যুক্ত করতে পারেন
+  const IsFreeShippng = subtotal > "3500" ? 0 : shippingCost ;
+  const vat = 0; 
+  const total = subtotal + IsFreeShippng + vat;
   const totalItemsCount = displayItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const handleInputChange = (e) => {
@@ -71,15 +75,16 @@ export default function Checkout() {
     setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
-  // 💾 ৩. অর্ডার কনফার্মেশন সাবমিট হ্যান্ডলার
+  // 💾 অর্ডার সাবমিট হ্যান্ডলার
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // ⚡ 🔥 ম্যাজিক কন্ডিশন: যদি ইউজার কার্ট পেজ থেকে আসে (অর্থাৎ cartItems-এ ডাটা থাকে)
+    // ⚡ যদি ইউজার কার্ট পেজ থেকে আসে, তবে Redux Cart খালি করা হবে
     if (cartItems.length > 0) {
-      dispatch(clearCart()); // রেডাক্স স্টেট এবং লোকাল স্টোরেজ দুটোই ফাঁকা হয়ে যাবে
+      dispatch(clearCart());
     }
 
+    // 🔥 নোট: অনলাইন পেমেন্ট হলে এখানে Backend API কল করে Redirect করতে হবে
     setIsOrderConfirmed(true);
   };
 
@@ -112,7 +117,7 @@ export default function Checkout() {
               </div>
               <div>
                 <p className="text-[11px] text-neutral-500 uppercase tracking-wider font-medium">Confirmation #NDZDUE0G8</p>
-                <h1 className="text-xl font-semibold text-neutral-900">Thank you, {formData.firstName}!</h1>
+                <h1 className="text-xl font-semibold text-neutral-900">Thank you, {formData.firstName || formData.lastName}!</h1>
               </div>
             </div>
 
@@ -161,7 +166,7 @@ export default function Checkout() {
                         <p>{formData.cityDistrict} {formData.postalCode}</p>
                         <p>{formData.country}</p>
                         <p>{formData.phone}</p>
-                      </                    >
+                      </>
                     ) : (
                       <>
                         <p>{formData.billingFirstName} {formData.billingLastName}</p>
@@ -212,12 +217,14 @@ export default function Checkout() {
   // =========================================================================
   return (
     <div className="min-h-screen bg-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-10">
-      {/* বাকি JSX ডিজাইন একদম আগের মতোই থাকবে */}
+      
+      {/* Mobile Top Header */}
       <div className="flex justify-between items-center pb-4 border-b border-neutral-200 lg:hidden mb-4">
         <div className="font-black tracking-wider text-xl">BRAND LOGO</div>
         <FiShoppingBag className="w-5 h-5 text-neutral-700" />
       </div>
 
+      {/* Mobile Order Summary Accordion */}
       <div className="lg:hidden w-full bg-neutral-50 border border-neutral-200 rounded-xl mb-6 overflow-hidden">
         <button
           type="button"
@@ -404,7 +411,8 @@ export default function Checkout() {
                   />
                   <span className="text-xs font-medium text-neutral-800">Inside Dhaka (ঢাকার ভিতরে)</span>
                 </div>
-                <span className="text-xs font-bold text-neutral-900">FREE</span>
+                {subtotal > 3500 ? (<span className="text-xs font-bold text-neutral-900">FREE</span>) : (<span className="text-xs font-bold text-neutral-900">TK 150</span>)}
+                
               </label>
 
               <label className={`flex items-center justify-between p-4 cursor-pointer ${shippingMethod === "outside" ? "bg-neutral-50" : ""}`}>
@@ -419,7 +427,7 @@ export default function Checkout() {
                   />
                   <span className="text-xs font-medium text-neutral-600">Outside Dhaka (ঢাকার বাইরে)</span>
                 </div>
-                <span className="text-xs font-bold text-neutral-900">FREE</span>
+                {subtotal > 3500 ? (<span className="text-xs font-bold text-neutral-900">FREE</span>) : (<span className="text-xs font-bold text-neutral-900">TK 150</span>)}
               </label>
             </div>
           </div>
@@ -581,7 +589,7 @@ export default function Checkout() {
                     <input
                       type="text"
                       name="billingAddressInput"
-                      placeholder="Asulia Savar"
+                      placeholder="Ashulia Savar"
                       value={formData.billingAddressInput}
                       onChange={handleInputChange}
                       className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black caret-black"
@@ -635,7 +643,7 @@ export default function Checkout() {
                         placeholder="01753628655"
                         value={formData.billingPhone}
                         onChange={handleInputChange}
-                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black pl-4 pr-16 caret-black relative z-10 "
+                        className="w-full text-sm px-4 py-3 bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black pl-4 pr-16 caret-black relative z-10"
                       />
                       <div className="absolute right-4 flex items-center gap-2 text-neutral-400 select-none z-0 pointer-events-none">
                         <span className="text-xl">🇧🇩</span>

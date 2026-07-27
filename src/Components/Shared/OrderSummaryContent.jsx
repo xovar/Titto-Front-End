@@ -6,10 +6,19 @@ function OrderSummaryContent({
   subtotal,
   vat,
   total,
-  hideCoupon = false,
+  shippingCost = 150, // parent component থেকে আসা শিপিং চার্জ (ডিফল্ট ৬০)
+  hideCoupon = true,
 }) {
+  // 🚚 ৩,৫০০ টাকা বা তার বেশি হলে ডাইনামিকালি ফ্রি ডেলিভারি হবে
+  const FREE_SHIPPING_THRESHOLD = 3500;
+  const isFreeDelivery = subtotal >= FREE_SHIPPING_THRESHOLD;
+
+  // অরিজিনাল শিপিং ফ্রি থাকলে দেখানোর জন্য ধরে নেওয়া চার্জ (যেমন: ৬০ বা ৮০ টাকা)
+  const originalShippingFee = shippingCost > 0 ? shippingCost : 60;
+
   return (
     <>
+      {/* Product List */}
       <div className="max-h-87.5 overflow-y-auto space-y-4 pt-2 pr-1">
         {displayItems.map((item) => (
           <div
@@ -91,24 +100,37 @@ function OrderSummaryContent({
           </span>
         </div>
 
+        {/* Dynamic Shipping Row */}
         <div className="flex justify-between text-neutral-600 items-center">
           <span className="flex items-center gap-1.5">
             Shipping{" "}
             <span
               className="text-neutral-400 cursor-help"
-              title="Free Shipping Promotion"
+              title={isFreeDelivery ? "Free Shipping Unlocked!" : "Standard Shipping"}
             >
               ⓘ
             </span>
           </span>
           <span className="text-neutral-900 font-medium">
-            <span className="line-through mr-1 text-neutral-400">৳৮০.০০</span>{" "}
-            FREE
+            {isFreeDelivery ? (
+              <>
+                <span className="line-through mr-1 text-neutral-400">
+                  ৳{originalShippingFee.toFixed(2)}
+                </span>{" "}
+                <span className="text-green-600 font-bold">FREE 🎉</span>
+              </>
+            ) : (
+              `৳${shippingCost.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`
+            )}
           </span>
         </div>
 
-        {!hideCoupon && (
-          <div className="text-[11px] text-neutral-500 flex items-center gap-1 font-medium select-none uppercase">
+        {/* Free Shipping Badge - only shown if subtotal >= 3500 */}
+        {!hideCoupon && isFreeDelivery && (
+          <div className="text-[11px] text-green-600 flex items-center gap-1 font-semibold select-none uppercase">
             <span>🏷️</span>
             <span>Enjoy Free Shipping</span>
           </div>
@@ -136,7 +158,7 @@ function OrderSummaryContent({
 
       <hr className="border-neutral-200" />
 
-      {/* Total */}
+      {/* Total Section */}
       <div className="space-y-2 text-left">
         <div className="flex justify-between items-baseline">
           <span className="text-sm font-bold text-neutral-900">Total</span>
@@ -154,10 +176,11 @@ function OrderSummaryContent({
           </div>
         </div>
 
-        {!hideCoupon && (
-          <div className="text-[11px] text-neutral-600 flex items-center gap-1 font-medium select-none uppercase">
+        {/* Dynamic Total Savings Badge */}
+        {!hideCoupon && isFreeDelivery && (
+          <div className="text-[11px] text-green-600 flex items-center gap-1 font-bold select-none uppercase">
             <span>🏷️</span>
-            <span>Total Savings ৳৮০.০০</span>
+            <span>Total Savings ৳{originalShippingFee.toFixed(2)}</span>
           </div>
         )}
       </div>
