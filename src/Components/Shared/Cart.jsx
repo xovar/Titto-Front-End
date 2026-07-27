@@ -37,8 +37,7 @@ export default function Cart() {
     return cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   }, [cartItems]);
 
-  const vat = useMemo(() => Math.round(subtotal * 0.05), [subtotal]);
-  const total = subtotal + vat;
+  const total = subtotal ;
 
   const progressPercent = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
 
@@ -184,10 +183,6 @@ export default function Cart() {
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span className="font-bold text-white">Tk {subtotal.toLocaleString()}.00 BDT</span>
-              </div>
-              <div className="flex justify-between">
-                <span>VAT 5%</span>
-                <span className="font-bold text-white">Tk {vat.toLocaleString()}.00</span>
               </div>
               <div className="flex justify-between">
                 <span>Delivery</span>

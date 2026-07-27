@@ -164,6 +164,7 @@ export default function SingleProduct() {
       size: currentSizeToShow,
       color: selectedColor,
       price: numericPrice,
+      dicount: product.discount,
       image: displayImages[0] || "https://via.placeholder.com/150",
       category: product.category?.name || "",
     };

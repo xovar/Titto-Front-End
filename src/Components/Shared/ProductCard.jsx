@@ -109,6 +109,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
         activeVariant?.images?.[0] || product.images?.[0] || displayImages[0],
       price: modalData.finalPrice / modalData.quantity,
       quantity: modalData.quantity,
+      discount: product.discount,
       size: modalData.size,
       color: modalData.color,
     };
