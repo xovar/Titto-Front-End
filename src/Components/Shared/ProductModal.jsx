@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { addToCart } from "../../store/features/cart/cartSlice";
 import { addToWishlist } from "../../store/features/wishList/wishListSlice";
 import { FiX, FiHeart, FiShoppingBag } from "react-icons/fi";
-import { LuRuler } from "react-icons/lu"; // LuRuler ইমপোর্ট করুন
+import { LuRuler } from "react-icons/lu";
 import { toast } from "react-toastify";
 import axios from "axios";
 
@@ -143,7 +143,6 @@ const SizeGuideModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-
           <div className="border border-neutral-200 rounded-md overflow-hidden">
             <table className="w-full text-center border-collapse">
               <thead>
@@ -193,8 +192,6 @@ export default function ProductModal({
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  console.log(product);
-
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [userSelectedColor, setUserSelectedColor] = useState("");
@@ -217,16 +214,14 @@ export default function ProductModal({
 
   // 📈 View Count API Patch
   useEffect(() => {
-  // activeVariant.id এর বদলে product.id ব্যবহার করা নিরাপদ
-  if (product?.id) {
-    axios
-      .patch(`https://api.titto.com.bd/api/products/${product.id}/view`)
-      .catch((err) => {
-        // ৪০৪ এরর হলেও যাতে কনসোলে রেড ফ্ল্যাগ বা অ্যাপ ক্র্যাশ না করে
-        console.warn("View tracking failed silently:", err.response?.status);
-      });
-  }
-}, [product?.id]);
+    if (product?.id) {
+      axios
+        .patch(`https://api.titto.com.bd/api/products/${product.id}/view`)
+        .catch((err) => {
+          console.warn("View tracking failed silently:", err.response?.status);
+        });
+    }
+  }, [product?.id]);
 
   // 📏 Dynamic Available Sizes
   const modalAvailableSizes = useMemo(() => {
@@ -247,15 +242,15 @@ export default function ProductModal({
     return ["https://via.placeholder.com/400x400?text=Product"];
   }, [activeVariant, product]);
 
-  // 💰 Price & Discount Calculation
-  const { numericPrice, numericOriginalPrice, discountPercent } = useMemo(() => {
-    const price = Number(product?.price) || 0;
+  // 💰 Fixed Price & Discount Calculation
+  const { finalPrice, originalPrice, discountPercent } = useMemo(() => {
+    const basePrice = Number(product?.price) || 0;
     const discount = Number(product?.discount) || 0;
-    const original = discount > 0 ? Number((price * (1 - discount / 100)).toFixed(0)) : price;
+    const calculatedFinal = discount > 0 ? Number((basePrice * (1 - discount / 100)).toFixed(0)) : basePrice;
 
     return {
-      numericPrice: price,
-      numericOriginalPrice: original,
+      originalPrice: basePrice,        // আসল দাম (Main / Regular Price)
+      finalPrice: calculatedFinal,    // ডিসকাউন্টেড দাম (Discounted Selling Price)
       discountPercent: discount,
     };
   }, [product?.price, product?.discount]);
@@ -279,7 +274,8 @@ export default function ProductModal({
       id: product?.id,
       name: product?.name,
       image: displayImages[0] || "",
-      price: product?.price,
+      price: finalPrice,
+      originalPrice: originalPrice,
       inStock: totalStock > 0,
     };
 
@@ -301,7 +297,8 @@ export default function ProductModal({
       quantity,
       size: currentSizeToShow,
       color: selectedColor,
-      price: numericPrice,
+      price: finalPrice,              // 🟢 ডিসকাউন্টেড সেলিং প্রাইস কার্টে যাচ্ছে
+      originalPrice: originalPrice,   // আসল দাম (কাটা প্রাইস দেখানোর জন্য)
       discount: product?.discount,
       image: displayImages[0] || "https://via.placeholder.com/150",
       category: product?.category?.name || "",
@@ -316,7 +313,7 @@ export default function ProductModal({
           quantity,
           size: currentSizeToShow,
           color: selectedColor,
-          finalPrice: numericPrice,
+          finalPrice: finalPrice,
           action: actionType,
         });
       }
@@ -367,12 +364,12 @@ export default function ProductModal({
             {/* Pricing Section */}
             <div className="flex items-center gap-4 mb-4">
               <div className="flex items-center text-xl font-black">
-                {discountPercent > 0 && numericOriginalPrice > 0 && (
+                {discountPercent > 0 && originalPrice > 0 && (
                   <span className="text-neutral-400 line-through font-normal mr-3 text-base">
-                    ৳{numericOriginalPrice.toFixed(0)}
+                    ৳{originalPrice.toFixed(0)}
                   </span>
                 )}
-                <span className="text-2xl">৳{numericPrice.toFixed(0)}</span>
+                <span className="text-2xl">৳{finalPrice.toFixed(0)}</span>
               </div>
             </div>
 
@@ -491,7 +488,7 @@ export default function ProductModal({
             </div>
 
             {/* LIVE TRACKING DATA BOX */}
-            <div className="border border-neutral-300 rounded-2xs p-3 bg-white text-xs text-neutral-900 space-y-2.5 mb-5 max-w-md w-full font-normal">
+            <div className="border border-neutral-300 rounded p-3 bg-white text-xs text-neutral-900 space-y-2.5 mb-5 max-w-md w-full font-normal">
               <div className="flex items-center gap-2">
                 <span className="text-emerald-500 font-bold text-sm select-none">🗹</span>
                 <span>
