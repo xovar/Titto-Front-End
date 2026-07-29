@@ -352,7 +352,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           {/* Price Section */}
           <div className="flex items-center gap-2 text-sm mt-auto">
             {discountPercent > 0 && (
-              <span className="flex items-center text-[15px] text-[#929090] font-['Bangla'] font-bold">
+              <span className="flex items-center text-[15px] text-[#929090] font-['Bangla'] font-bold ">
                 <span className="text-[18px]">৳</span>
                 <span className="line-through ml-0.5">
                   {numericOriginalPrice.toFixed(2)}

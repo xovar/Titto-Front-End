@@ -107,7 +107,7 @@ export default function Men() {
   };
 
   return (
-    <div className="max-w-360 mx-auto px-4 md:px-8 py-10 font-sans text-neutral-800 bg-[#fafafa]">
+    <div className="max-w-360 mx-auto px-4 md:px-8 py-10 font-sans text-neutral-800">
       
       {/* MOBILE FILTER TOGGLE BUTTON */}
       <div className="lg:hidden mb-6">

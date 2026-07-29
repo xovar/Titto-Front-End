@@ -53,9 +53,9 @@ export default function FiltersSidebar({
         <h3 className="font-bold mb-4 text-sm">
           Price Filter: Up to ৳{maxPrice}
         </h3>
-        <div className="flex justify-between text-xs text-neutral-500 mb-2">
-          <span>৳100</span>
-          <span>৳12000</span>
+        <div className="flex justify-between font-['Bangla'] font-bold text-xs text-neutral-500 mb-2">
+          <span className="text-[18px]">৳100</span>
+          <span className="text-[18px]">৳12000</span>
         </div>
         <input
           type="range"

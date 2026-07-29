@@ -3,7 +3,7 @@ import Home from "../Pages/Home/Home";
 import RootLayout from "../Layouts/RootLayout";
 import Men from "../Pages/Men/Men";
 import SingleProductDetail from "../Components/Shared/SingleProductDetail";
-import Checkout from "../Components/Shared/Checkout";
+import Checkout from "../Components/checkout/Checkout";
 import Cart from "../Components/Shared/Cart";
 import Wishlist from "../Components/Shared/Wishlist";
 import Women from "../Pages/Women/Women";

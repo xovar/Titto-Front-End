@@ -201,11 +201,6 @@ export default function Cart() {
                       <span className="text-sm font-black text-neutral-900 tracking-tight block">
                         Tk {(sellingPrice * item.quantity).toLocaleString()}.00
                       </span>
-                      {hasDiscount && (
-                        <span className="text-[10px] text-neutral-400 line-through block">
-                          Tk {(originalPrice * item.quantity).toLocaleString()}.00
-                        </span>
-                      )}
                     </div>
                   </div>
 
