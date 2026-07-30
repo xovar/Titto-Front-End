@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiChevronDown, FiChevronUp, FiShoppingBag } from "react-icons/fi";
 import { useDispatch } from "react-redux";
-import { clearCart } from "../../store/features/cart/cartSlice"; // 👈 আপনার প্রজেক্টের সঠিক পাথ দিন
+import { clearCart } from "../../store/features/cart/cartSlice";
 
 // 🧩 সাব-কম্পোনেন্ট ইমপোর্ট
 import DeliveryForm from "./DeliveryForm";
@@ -11,6 +11,15 @@ import PaymentMethodSection from "./PaymentMethodSection";
 import BillingAddressSection from "./BillingAddressSection";
 import OrderConfirmation from "./OrderConfirmation";
 import OrderSummaryContent from "./OrderSummaryContent";
+
+// 🛡️ সেফ নম্বর পার্সার (যে কোনো স্ট্রিং বা টেক্সট থেকে সঠিক নম্বর বের করবে)
+const cleanNumber = (val) => {
+  if (typeof val === "number") return isNaN(val) ? 0 : val;
+  if (!val) return 0;
+  const cleaned = String(val).replace(/[^0-9.-]+/g, "");
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+};
 
 export default function Checkout() {
   const location = useLocation();
@@ -57,7 +66,7 @@ export default function Checkout() {
         </h2>
         <button
           onClick={() => navigate("/")}
-          className="bg-black text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-neutral-800 transition-colors"
+          className="bg-black text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-neutral-800 transition-colors cursor-pointer"
         >
           Go Shopping
         </button>
@@ -66,38 +75,67 @@ export default function Checkout() {
   }
 
   // 🧮 ক্যালকুলেশন
-  // Subtotal (আইটেমের মূল দামের মোট হিসাব)
-  const subtotal = displayItems.reduce(
-    (acc, item) => acc + (item.price || 0) * item.quantity,
-    0
-  );
 
-  // Discount Calculation (পার্সেন্টেজ, ফ্ল্যাট বা অরিজিনাল প্রাইস ডিফারেন্স থেকে মোট ডিসকাউন্ট)
-  const totalDiscount = displayItems.reduce((acc, item) => {
-    const qty = item.quantity || 1;
-    if (item.discountPercent && item.discountPercent > 0) {
-      // Direct percentage discount (%)
-      const discountPerItem = (item.price * item.discountPercent) / 100;
-      return acc + discountPerItem * qty;
-    } else if (item.discountAmount && item.discountAmount > 0) {
-      // Flat amount discount (৳)
-      return acc + item.discountAmount * qty;
-    } else if (item.originalPrice && item.originalPrice > item.price) {
-      // Price Difference (Original price vs Discounted price)
-      return acc + (item.originalPrice - item.price) * qty;
+  // ১. Gross Subtotal (আসল দামের মোট যোগফল)
+  const subtotal = displayItems.reduce((acc, item) => {
+    const qty = cleanNumber(item.quantity || item.qty || 1);
+    const price = cleanNumber(item.price);
+
+    let rawOriginal = cleanNumber(
+      item.originalPrice || item.original_price || item.regular_price || item.mrp
+    );
+
+    const discountVal = cleanNumber(item.discountPercent || item.discountAmount || item.discount);
+
+    if (!rawOriginal || rawOriginal === price) {
+      if (item.discountPercent && cleanNumber(item.discountPercent) > 0) {
+        rawOriginal = price / (1 - cleanNumber(item.discountPercent) / 100);
+      } else if (discountVal > 0) {
+        rawOriginal = price + discountVal;
+      } else {
+        rawOriginal = price;
+      }
     }
-    return acc;
+
+    return acc + rawOriginal * qty;
   }, 0);
 
+  // ২. Total Discount
+  const totalDiscount = displayItems.reduce((acc, item) => {
+    const qty = cleanNumber(item.quantity || item.qty || 1);
+    const price = cleanNumber(item.price);
+
+    let rawOriginal = cleanNumber(
+      item.originalPrice || item.original_price || item.regular_price || item.mrp
+    );
+
+    const discountVal = cleanNumber(item.discountPercent || item.discountAmount || item.discount);
+
+    if (!rawOriginal || rawOriginal === price) {
+      if (item.discountPercent && cleanNumber(item.discountPercent) > 0) {
+        rawOriginal = price / (1 - cleanNumber(item.discountPercent) / 100);
+      } else if (discountVal > 0) {
+        rawOriginal = price + discountVal;
+      } else {
+        rawOriginal = price;
+      }
+    }
+
+    const discountAmount = Math.max(0, rawOriginal - price);
+    return acc + discountAmount * qty;
+  }, 0);
+
+  // ৩. শিপিং ও ভ্যাট
   const baseShippingCost = 150;
-  const IsFreeShippng = subtotal >= 3500 ? 0 : baseShippingCost;
+  const netProductTotal = subtotal - totalDiscount;
+  const isFreeShipping = netProductTotal >= 3500 ? 0 : baseShippingCost;
   const vat = 0;
 
-  // Final Total calculation
-  const total = Math.max(0, subtotal - totalDiscount + IsFreeShippng + vat);
+  // ৪. ফাইনাল টোটাল
+  const total = Math.max(0, subtotal - totalDiscount + isFreeShipping + vat);
 
   const totalItemsCount = displayItems.reduce(
-    (acc, item) => acc + item.quantity,
+    (acc, item) => acc + cleanNumber(item.quantity || 1),
     0
   );
 
@@ -123,7 +161,7 @@ export default function Checkout() {
     setCouponCode,
     totalItemsCount,
     subtotal,
-    discount: totalDiscount, // 👈 Discount pass করা হলো
+    discount: totalDiscount,
     vat,
     total,
     shippingCost: baseShippingCost,
@@ -171,7 +209,7 @@ export default function Checkout() {
           </div>
           <span className="text-base font-bold text-neutral-900">
             ৳
-            {total.toLocaleString(undefined, {
+            {total.toLocaleString("en-BD", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -192,26 +230,22 @@ export default function Checkout() {
       >
         {/* LEFT COLUMN: Checkout Form */}
         <div className="w-full lg:w-[55%] space-y-8 text-left">
-          {/* Delivery Form */}
           <DeliveryForm
             formData={formData}
             handleInputChange={handleInputChange}
           />
 
-          {/* Shipping Method */}
           <ShippingMethodSection
             shippingMethod={shippingMethod}
             setShippingMethod={setShippingMethod}
-            subtotal={subtotal}
+            subtotal={netProductTotal}
           />
 
-          {/* Payment Section */}
           <PaymentMethodSection
             paymentMethod={paymentMethod}
             setPaymentMethod={setPaymentMethod}
           />
 
-          {/* Billing Address */}
           <BillingAddressSection
             billingAddress={billingAddress}
             setBillingAddress={setBillingAddress}
@@ -219,7 +253,6 @@ export default function Checkout() {
             handleInputChange={handleInputChange}
           />
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-neutral-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-colors text-sm uppercase tracking-wider cursor-pointer"

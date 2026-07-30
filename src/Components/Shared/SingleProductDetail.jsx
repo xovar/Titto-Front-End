@@ -17,7 +17,9 @@ import { toast } from "react-toastify";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+
 import { addToCart } from "../../store/features/cart/cartSlice";
+import { addToWishlist } from "../../store/features/wishList/wishListSlice";
 import axios from "axios";
 
 export default function SingleProduct() {
@@ -36,7 +38,9 @@ export default function SingleProduct() {
 
   useEffect(() => {
     if (id) {
-      axios.patch(`https://api.titto.com.bd/api/products/${id}/view`);
+      axios.patch(`https://api.titto.com.bd/api/products/${id}/view`).catch((err) => {
+        console.warn("View tracking failed silently:", err.response?.status);
+      });
     }
   }, [id]);
 
@@ -106,7 +110,7 @@ export default function SingleProduct() {
   const decrementQty = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
   // ⚡ ইমেজ এবং প্রাইস সেটআপ
-  const displayImages = activeVariant?.images || [];
+  const displayImages = activeVariant?.images || product?.images || [];
   const currentActiveImage = displayImages[activeImageIndex] || displayImages[0] || "";
 
   const numericOriginalPrice = Number(product?.price) || 0;
@@ -116,11 +120,10 @@ export default function SingleProduct() {
       ? Number((numericOriginalPrice * (1 - discountPercent / 100)).toFixed(0))
       : numericOriginalPrice;
 
-  // 🔍 সংশোধিত Magnifier Box লজিক
+  // 🔍 Magnifier Box লজিক
   const handleMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     
-    // কার্সরের পজিশন
     let x = e.clientX - left;
     let y = e.clientY - top;
 
@@ -128,7 +131,6 @@ export default function SingleProduct() {
     let lensX = x - lensSize / 2;
     let lensY = y - lensSize / 2;
 
-    // বাউন্ডারি লক
     if (lensX < 0) lensX = 0;
     if (lensX > width - lensSize) lensX = width - lensSize;
     if (lensY < 0) lensY = 0;
@@ -136,7 +138,6 @@ export default function SingleProduct() {
 
     setLensPos({ x: lensX, y: lensY });
 
-    // ব্যাকগ্রাউন্ড জুমিং পজিশনিং (নিখুঁত করার জন্য)
     const zoomX = (x / width) * 100;
     const zoomY = (y / height) * 100;
 
@@ -149,10 +150,44 @@ export default function SingleProduct() {
     if (swiperRef) swiperRef.slideTo(index);
   };
 
-  // ⚡ রিডাক্স ডিসপ্যাচ অ্যাকশন ফাংশন
+  // 💖 উইশলিস্ট ক্লিক হ্যান্ডলার
+  const handleWishlistClick = () => {
+    const totalStock =
+      product?.variants?.reduce((total, variant) => {
+        return (
+          total +
+          (variant.sizes?.reduce((sTotal, s) => sTotal + s.stock, 0) || 0)
+        );
+      }, 0) || 0;
+
+    const wishlistPayload = {
+      id: product?.id,
+      name: product?.name,
+      image: displayImages[0] || "",
+      price: numericPrice,
+      originalPrice: numericOriginalPrice,
+      inStock: totalStock > 0,
+    };
+
+    toast.success("Added to Wishlist! ❤️");
+    dispatch(addToWishlist(wishlistPayload));
+  };
+
+  // ⚡ রিডাক্স ডিসপ্যাচ অ্যাকশন ফাংশন (কার্ট ও বাই নাউ)
   const handleAction = (actionType) => {
     if (!currentSizeToShow) {
       toast.error("Please select a size first!");
+      return;
+    }
+
+    // স্টক চেক
+    const sizeObj = activeVariant?.sizes?.find(
+      (s) => String(s.size).trim().toLowerCase() === String(currentSizeToShow).trim().toLowerCase()
+    );
+    const selectedSizeStock = sizeObj ? Number(sizeObj.stock || 0) : 0;
+
+    if (selectedSizeStock <= 0) {
+      toast.error("Selected size is currently out of stock!");
       return;
     }
 
@@ -164,9 +199,11 @@ export default function SingleProduct() {
       size: currentSizeToShow,
       color: selectedColor,
       price: numericPrice,
-      dicount: product.discount,
+      originalPrice: numericOriginalPrice,
+      discount: product?.discount,
+      stock: selectedSizeStock, // 🟢 স্টক যোগ করা হয়েছে
       image: displayImages[0] || "https://via.placeholder.com/150",
-      category: product.category?.name || "",
+      category: product?.category?.name || "",
     };
 
     if (actionType === "cart") {
@@ -199,7 +236,7 @@ export default function SingleProduct() {
         </h2>
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-neutral-600 hover:text-black border px-4 py-2 rounded-lg transition-all"
+          className="flex items-center gap-2 text-sm text-neutral-600 hover:text-black border px-4 py-2 rounded-lg transition-all cursor-pointer"
         >
           <FiArrowLeft /> Go Back
         </button>
@@ -227,7 +264,7 @@ export default function SingleProduct() {
                 setActiveImageIndex(swiper.activeIndex);
                 setIsZoomed(false);
               }}
-              className="w-full h-full pointer-events-none" // pointer-events-none যাতে জুম ট্র্যাকিং এ বাধা না দেয়
+              className="w-full h-full pointer-events-none"
             >
               {displayImages.map((imgUrl, idx) => (
                 <SwiperSlide
@@ -274,7 +311,7 @@ export default function SingleProduct() {
               <>
                 <button
                   type="button"
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-80 hover:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200 pointer-events-auto"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-80 hover:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200 pointer-events-auto cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     swiperRef?.slidePrev();
@@ -284,7 +321,7 @@ export default function SingleProduct() {
                 </button>
                 <button
                   type="button"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-80 hover:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200 pointer-events-auto"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 shadow-sm opacity-80 hover:opacity-100 hover:bg-neutral-900 hover:text-white transition-all duration-200 pointer-events-auto cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     swiperRef?.slideNext();
@@ -379,7 +416,7 @@ export default function SingleProduct() {
             </div>
           )}
 
-          {/* SIZE SELECTOR */}
+          {/* SIZE SELECTOR WITH OUT OF STOCK DISABLE */}
           {availableSizes.length > 0 && (
             <div className="mb-6">
               <label className="block text-xs font-black text-neutral-700 uppercase tracking-wider mb-2.5">
@@ -393,16 +430,31 @@ export default function SingleProduct() {
                   .slice()
                   .sort((a, b) => Number(a) - Number(b))
                   .map((size) => {
+                    // 🟢 ১. সাইজ অনুযায়ী স্টক বের করা
+                    const sizeObj = activeVariant?.sizes?.find(
+                      (s) => String(s.size).trim().toLowerCase() === String(size).trim().toLowerCase()
+                    );
+                    const stockCount = sizeObj ? Number(sizeObj.stock || 0) : 0;
+                    const isOutOfStock = stockCount <= 0;
                     const isSelected = currentSizeToShow === size;
+
                     return (
                       <button
                         key={size}
                         type="button"
-                        onClick={() => setUserSelectedSize(size)}
-                        className={`h-10 min-w-10 px-3.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
-                          isSelected
-                            ? "bg-neutral-900 text-white border border-neutral-900 shadow-sm"
-                            : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
+                        disabled={isOutOfStock}
+                        title={isOutOfStock ? "Out of Stock" : `Size: ${size}`}
+                        onClick={() => {
+                          if (!isOutOfStock) {
+                            setUserSelectedSize(size);
+                          }
+                        }}
+                        className={`h-10 min-w-10 px-3.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 flex items-center justify-center select-none ${
+                          isOutOfStock
+                            ? "bg-neutral-100 text-neutral-300 border border-neutral-200 line-through cursor-not-allowed opacity-60"
+                            : isSelected
+                            ? "bg-neutral-900 text-white border border-neutral-900 shadow-sm cursor-pointer"
+                            : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400 cursor-pointer"
                         }`}
                       >
                         {size}
@@ -422,7 +474,7 @@ export default function SingleProduct() {
               <button
                 type="button"
                 onClick={decrementQty}
-                className="w-8 h-full flex items-center justify-center hover:bg-neutral-50 text-neutral-500 text-base border-r border-neutral-200"
+                className="w-8 h-full flex items-center justify-center hover:bg-neutral-50 text-neutral-500 text-base border-r border-neutral-200 cursor-pointer"
               >
                 -
               </button>
@@ -432,7 +484,7 @@ export default function SingleProduct() {
               <button
                 type="button"
                 onClick={incrementQty}
-                className="w-8 h-full flex items-center justify-center hover:bg-neutral-50 text-neutral-500 text-base border-l border-neutral-200"
+                className="w-8 h-full flex items-center justify-center hover:bg-neutral-50 text-neutral-500 text-base border-l border-neutral-200 cursor-pointer"
               >
                 +
               </button>
@@ -489,7 +541,7 @@ export default function SingleProduct() {
             {!currentSizeToShow ? (
               <button
                 type="button"
-                className="w-full bg-black text-white font-medium text-sm py-3 rounded transition-colors"
+                className="w-full bg-black text-white font-medium text-sm py-3 rounded transition-colors cursor-pointer"
                 onClick={() => toast.error("Please select a size first!")}
               >
                 Select Size
@@ -515,9 +567,10 @@ export default function SingleProduct() {
 
             <button
               type="button"
+              onClick={handleWishlistClick}
               className="w-full cursor-pointer bg-white hover:bg-neutral-900 text-neutral-800 hover:text-white border border-neutral-300 font-medium text-sm py-2.5 rounded transition-colors flex items-center justify-center gap-2"
             >
-              Add to Wishlist <FiHeart className="w-4 h-4 " />
+              Add to Wishlist <FiHeart className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -580,41 +633,21 @@ export default function SingleProduct() {
                     </tr>
                   </thead>
                   <tbody className="text-sm font-bold text-neutral-800 divide-y divide-neutral-200">
-                    <tr className="hover:bg-neutral-50">
-                      <td className="py-2 px-2 border-r border-neutral-200">39</td>
-                      <td className="py-2 px-2 border-r border-neutral-200">5</td>
-                      <td className="py-2 px-2">9.5</td>
-                    </tr>
-                    <tr className="hover:bg-neutral-50">
-                      <td className="py-2 px-2 border-r border-neutral-200">40</td>
-                      <td className="py-2 px-2 border-r border-neutral-200">6</td>
-                      <td className="py-2 px-2">9.8</td>
-                    </tr>
-                    <tr className="hover:bg-neutral-50">
-                      <td className="py-2 px-2 border-r border-neutral-200">41</td>
-                      <td className="py-2 px-2 border-r border-neutral-200">7</td>
-                      <td className="py-2 px-2">10</td>
-                    </tr>
-                    <tr className="hover:bg-neutral-50">
-                      <td className="py-2 px-2 border-r border-neutral-200">42</td>
-                      <td className="py-2 px-2 border-r border-neutral-200">8</td>
-                      <td className="py-2 px-2">10.3</td>
-                    </tr>
-                    <tr className="hover:bg-neutral-50">
-                      <td className="py-2 px-2 border-r border-neutral-200">43</td>
-                      <td className="py-2 px-2 border-r border-neutral-200">9</td>
-                      <td className="py-2 px-2">10.5</td>
-                    </tr>
-                    <tr className="hover:bg-neutral-50">
-                      <td className="py-2 px-2 border-r border-neutral-200">44</td>
-                      <td className="py-2 px-2 border-r border-neutral-200">10</td>
-                      <td className="py-2 px-2">10.9</td>
-                    </tr>
-                    <tr className="hover:bg-neutral-50">
-                      <td className="py-2 px-2 border-r border-neutral-200">45</td>
-                      <td className="py-2 px-2 border-r border-neutral-200">11</td>
-                      <td className="py-2 px-2">11.1</td>
-                    </tr>
+                    {[
+                      { size: 39, local: 5, inches: "9.5" },
+                      { size: 40, local: 6, inches: "9.8" },
+                      { size: 41, local: 7, inches: "10" },
+                      { size: 42, local: 8, inches: "10.3" },
+                      { size: 43, local: 9, inches: "10.5" },
+                      { size: 44, local: 10, inches: "10.9" },
+                      { size: 45, local: 11, inches: "11.1" },
+                    ].map((row) => (
+                      <tr key={row.size} className="hover:bg-neutral-50">
+                        <td className="py-2 px-2 border-r border-neutral-200">{row.size}</td>
+                        <td className="py-2 px-2 border-r border-neutral-200">{row.local}</td>
+                        <td className="py-2 px-2">{row.inches}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

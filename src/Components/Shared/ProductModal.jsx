@@ -249,8 +249,8 @@ export default function ProductModal({
     const calculatedFinal = discount > 0 ? Number((basePrice * (1 - discount / 100)).toFixed(0)) : basePrice;
 
     return {
-      originalPrice: basePrice,        // আসল দাম (Main / Regular Price)
-      finalPrice: calculatedFinal,    // ডিসকাউন্টেড দাম (Discounted Selling Price)
+      originalPrice: basePrice,
+      finalPrice: calculatedFinal,
       discountPercent: discount,
     };
   }, [product?.price, product?.discount]);
@@ -290,6 +290,17 @@ export default function ProductModal({
       return;
     }
 
+    // Selected Size details and stock check
+    const sizeObj = activeVariant?.sizes?.find(
+      (s) => String(s.size).trim().toLowerCase() === String(currentSizeToShow).trim().toLowerCase()
+    );
+    const selectedSizeStock = sizeObj ? Number(sizeObj.stock || 0) : Infinity;
+
+    if (selectedSizeStock <= 0) {
+      toast.error("Selected size is currently out of stock!");
+      return;
+    }
+
     const orderPayload = {
       productId: product?.id,
       variantId: activeVariant?.id,
@@ -297,9 +308,10 @@ export default function ProductModal({
       quantity,
       size: currentSizeToShow,
       color: selectedColor,
-      price: finalPrice,              // 🟢 ডিসকাউন্টেড সেলিং প্রাইস কার্টে যাচ্ছে
-      originalPrice: originalPrice,   // আসল দাম (কাটা প্রাইস দেখানোর জন্য)
+      price: finalPrice,
+      originalPrice: originalPrice,
       discount: product?.discount,
+      stock: selectedSizeStock, // 🟢 কার্টের সাথে স্টক সমন্বয় করতে স্টক যোগ করে দেওয়া হলো
       image: displayImages[0] || "https://via.placeholder.com/150",
       category: product?.category?.name || "",
     };
@@ -380,7 +392,7 @@ export default function ProductModal({
 
             {/* Selectors Section */}
             <div className="space-y-4 mb-6">
-              {/* SIZE SELECTOR */}
+              {/* SIZE SELECTOR WITH OUT OF STOCK DISABLE */}
               {modalAvailableSizes.length > 0 && (
                 <div>
                   <label className="block text-xs font-black text-neutral-700 uppercase tracking-wider mb-2.5">
@@ -394,16 +406,31 @@ export default function ProductModal({
                       .slice()
                       .sort((a, b) => Number(a) - Number(b))
                       .map((size) => {
+                        // 🟢 ১. উক্ত সাইজের অবজেক্ট এবং স্টক চেক
+                        const sizeObj = activeVariant?.sizes?.find(
+                          (s) => String(s.size).trim().toLowerCase() === String(size).trim().toLowerCase()
+                        );
+                        const stockCount = sizeObj ? Number(sizeObj.stock || 0) : 0;
+                        const isOutOfStock = stockCount <= 0;
                         const isSelected = currentSizeToShow === size;
+
                         return (
                           <button
                             key={size}
                             type="button"
-                            onClick={() => setUserSelectedSize(size)}
-                            className={`h-10 min-w-10 px-3.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 cursor-pointer flex items-center justify-center ${
-                              isSelected
-                                ? "bg-neutral-900 text-white border border-neutral-900 shadow-sm"
-                                : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
+                            disabled={isOutOfStock}
+                            title={isOutOfStock ? "Out of Stock" : `Size: ${size}`}
+                            onClick={() => {
+                              if (!isOutOfStock) {
+                                setUserSelectedSize(size);
+                              }
+                            }}
+                            className={`h-10 min-w-10 px-3.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 flex items-center justify-center select-none ${
+                              isOutOfStock
+                                ? "bg-neutral-100 text-neutral-300 border border-neutral-200 line-through cursor-not-allowed opacity-60"
+                                : isSelected
+                                ? "bg-neutral-900 text-white border border-neutral-900 shadow-sm cursor-pointer"
+                                : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400 cursor-pointer"
                             }`}
                           >
                             {size}

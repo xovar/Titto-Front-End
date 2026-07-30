@@ -66,7 +66,6 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   const currentStock = useMemo(() => {
     if (!activeVariant || !activeVariant.sizes) return 0;
 
-    // একটিভ ভ্যারিয়েন্টের ভেতর থেকে ইউজারের সিলেক্ট করা সাইজ অবজেক্টটি খোঁজা হচ্ছে
     const sizeObj = activeVariant.sizes.find(
       (s) => s.size === currentSizeToShow,
     );
@@ -94,13 +93,13 @@ export default function ProductCard({ product, viewMode = "grid" }) {
   // ২. ডিসকাউন্ট পার্সেন্টেজ
   const discountPercent = Number(product.discount) || 0;
 
-  // ৩. বর্তমান বিক্রয়মূল্য (Calculated Price) - ডিসকাউন্ট থাকলে ছাড়ের পর যা হবে, না থাকলে আসল দাম
+  // ৩. বর্তমান বিক্রয়মূল্য (Calculated Price)
   const numericPrice =
     discountPercent > 0
       ? Number((numericOriginalPrice * (1 - discountPercent / 100)).toFixed(0))
       : numericOriginalPrice;
 
-  // ⚡ মোডাল সাবমিশন হ্যান্ডলার (Buy Now এবং Add to Cart দুটোই হ্যান্ডেল করবে)
+  // ⚡ মোডাল সাবমিশন হ্যান্ডলার
   const handleAddToCartSubmit = (modalData) => {
     const itemToCheckout = {
       id: product.id,
@@ -121,14 +120,6 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       });
       return;
     }
-
-    console.log("Added to cart payload submission:", {
-      ...product,
-      quantity: modalData.quantity,
-      size: modalData.size,
-      color: modalData.color,
-      finalPrice: modalData.finalPrice,
-    });
 
     toast.success(
       <div className="flex flex-col gap-0.5 text-left">
@@ -279,18 +270,15 @@ export default function ProductCard({ product, viewMode = "grid" }) {
               Sizes:
             </span>
             <div className="flex flex-wrap gap-1">
-              {/* ⚡ সাইজগুলোকে ছোট থেকে বড় ক্রমে সাজানোর লজিক */}
               {[...availableSizes]
                 .sort((a, b) => {
                   const numA = parseFloat(a);
                   const numB = parseFloat(b);
 
-                  // ১. যদি দুটিই সংখ্যা হয় (যেমন: 40, 41, 42)
                   if (!isNaN(numA) && !isNaN(numB)) {
                     return numA - numB;
                   }
 
-                  // ২. যদি টেক্সট সাইজ হয় (S, M, L, XL ইত্যাদি)
                   const sizeOrder = [
                     "xs",
                     "s",
@@ -308,23 +296,36 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                     return indexA - indexB;
                   }
 
-                  // ৩. সাধারণ স্ট্রিং অ্যালফাবেটিকাল শর্টিং
                   return String(a).localeCompare(String(b));
                 })
                 .map((sizeValue) => {
+                  // 🟢 ১. নির্দিষ্ট এই সাইজের স্টক আছে কিনা চেক
+                  const sizeObj = activeVariant?.sizes?.find(
+                    (s) => s.size === sizeValue,
+                  );
+                  
+                  // activeVariant.sizes থাকলে সেখান থেকে স্টক দেখা হচ্ছে, অন্যথায় এভেলেবল ধরা হচ্ছে
+                  const sizeStock = activeVariant?.sizes ? (sizeObj ? sizeObj.stock : 0) : 1;
+                  const isOutOfStock = sizeStock === 0;
+
                   const isSelected = currentSizeToShow === sizeValue;
+
                   return (
                     <button
                       key={sizeValue}
                       type="button"
+                      disabled={isOutOfStock}
+                      title={isOutOfStock ? "Out of Stock" : `Size: ${sizeValue}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleSizeClick(sizeValue);
+                        if (!isOutOfStock) handleSizeClick(sizeValue);
                       }}
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors cursor-pointer ${
-                        isSelected
-                          ? "bg-neutral-900 border-neutral-900 text-white"
-                          : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-400"
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${
+                        isOutOfStock
+                          ? "bg-neutral-100 border-neutral-200 text-neutral-300 line-through cursor-not-allowed opacity-100"
+                          : isSelected
+                          ? "bg-neutral-900 border-neutral-900 text-white cursor-pointer"
+                          : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-400 cursor-pointer"
                       }`}
                     >
                       {sizeValue}
