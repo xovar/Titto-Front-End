@@ -100,7 +100,7 @@ export default function OrderSummaryContent({
                     {/* বর্তমান দাম + আইটেম লেভেল % ব্যাজ (Optional) */}
                     <div className="flex items-center gap-1 justify-end">
                       {itemDiscountPercent > 0 && (
-                        <span className="text-[9px] bg-red-100 text-red-600 font-bold px-1 rounded">
+                        <span className="text-[9px] bg-green-100 text-green-600 font-bold px-1 rounded">
                           -{itemDiscountPercent}%
                         </span>
                       )}

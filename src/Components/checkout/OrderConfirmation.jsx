@@ -10,10 +10,14 @@ export default function OrderConfirmation({
   shippingMethod,
   summaryProps,
   navigate,
+  orderId, // 👈 ১. Dynamic orderId Prop গ্রহণ করা হলো
 }) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // 👈 ২. Fallback logic: যদি orderId না আসে তবে একটি র‍্যান্ডম আইডি তৈরি হবে
+  const displayOrderId = orderId || `ORD-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 
   return (
     <div className="min-h-screen bg-white max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -25,11 +29,12 @@ export default function OrderConfirmation({
               <FiCheck className="w-6 h-6 text-neutral-900" />
             </div>
             <div>
+              {/* 👈 ৩. হার্ডকোড তুলে Dynamic ID বসানো হলো */}
               <p className="text-[11px] text-neutral-500 uppercase tracking-wider font-medium">
-                Confirmation #NDZDUE0G8
+                Confirmation #{displayOrderId}
               </p>
               <h1 className="text-xl font-semibold text-neutral-900">
-                Thank you, {formData.firstName || formData.lastName}!
+                Thank you, {formData?.firstName || formData?.lastName || "Customer"}!
               </h1>
             </div>
           </div>
@@ -59,7 +64,7 @@ export default function OrderConfirmation({
                 </h4>
                 <p className="text-neutral-800 font-medium">
                   {getPaymentMethodText()} · ৳
-                  {total.toLocaleString(undefined, {
+                  {total?.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}{" "}
@@ -150,7 +155,6 @@ export default function OrderConfirmation({
         </div>
 
         {/* RIGHT COLUMN: Order Summary Box */}
-        {/* 💡 top-6 পরিবতে top-28 এবং self-start যোগ করা হয়েছে */}
         <div className="hidden lg:block w-full lg:w-[45%] bg-neutral-50 border border-neutral-200 rounded-2xl p-6 sticky top-28 space-y-6 self-start">
           <OrderSummaryContent {...summaryProps} hideCoupon={true} />
         </div>

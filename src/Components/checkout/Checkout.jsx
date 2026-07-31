@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiChevronDown, FiChevronUp, FiShoppingBag } from "react-icons/fi";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { clearCart } from "../../store/features/cart/cartSlice";
+import { createOrder } from "../../store/features/order/orderSlice";
 
 // 🧩 সাব-কম্পোনেন্ট ইমপোর্ট
 import DeliveryForm from "./DeliveryForm";
@@ -12,7 +13,7 @@ import BillingAddressSection from "./BillingAddressSection";
 import OrderConfirmation from "./OrderConfirmation";
 import OrderSummaryContent from "./OrderSummaryContent";
 
-// 🛡️ সেফ নম্বর পার্সার (যে কোনো স্ট্রিং বা টেক্সট থেকে সঠিক নম্বর বের করবে)
+// 🛡️ সেফ নম্বর পার্সার
 const cleanNumber = (val) => {
   if (typeof val === "number") return isNaN(val) ? 0 : val;
   if (!val) return 0;
@@ -25,6 +26,11 @@ export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // 🔄 Redux Order State থেকে Loading এবং Error আনা
+  const { loading: isSubmitting, error: orderError } = useSelector(
+    (state) => state.order
+  );
 
   // 📥 ডাটা রিসিভ
   const cartItems = location.state?.cartItems || [];
@@ -39,6 +45,7 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [billingAddress, setBillingAddress] = useState("same");
   const [couponCode, setCouponCode] = useState("");
+  const [placedOrderId, setPlacedOrderId] = useState(null);
 
   const [formData, setFormData] = useState({
     country: "Bangladesh",
@@ -74,68 +81,43 @@ export default function Checkout() {
     );
   }
 
-  // 🧮 ক্যালকুলেশন
+  // 🧮 ক্লিন ও নির্ভুল ক্যালকুলেশন
 
-  // ১. Gross Subtotal (আসল দামের মোট যোগফল)
+  // ১. Gross Subtotal (অরিজিনাল দাম × কোয়ান্টিটি) e.g., 2000 x 2 = 4000
   const subtotal = displayItems.reduce((acc, item) => {
     const qty = cleanNumber(item.quantity || item.qty || 1);
-    const price = cleanNumber(item.price);
-
-    let rawOriginal = cleanNumber(
-      item.originalPrice || item.original_price || item.regular_price || item.mrp
+    const regularPrice = cleanNumber(
+      item.originalPrice || item.original_price || item.regular_price || item.mrp || item.price
     );
-
-    const discountVal = cleanNumber(item.discountPercent || item.discountAmount || item.discount);
-
-    if (!rawOriginal || rawOriginal === price) {
-      if (item.discountPercent && cleanNumber(item.discountPercent) > 0) {
-        rawOriginal = price / (1 - cleanNumber(item.discountPercent) / 100);
-      } else if (discountVal > 0) {
-        rawOriginal = price + discountVal;
-      } else {
-        rawOriginal = price;
-      }
-    }
-
-    return acc + rawOriginal * qty;
+    return acc + regularPrice * qty;
   }, 0);
 
-  // ২. Total Discount
+  // ২. Total Discount (মোট ছাড়) e.g., (2000 - 1600) x 2 = 800
   const totalDiscount = displayItems.reduce((acc, item) => {
     const qty = cleanNumber(item.quantity || item.qty || 1);
-    const price = cleanNumber(item.price);
-
-    let rawOriginal = cleanNumber(
-      item.originalPrice || item.original_price || item.regular_price || item.mrp
+    const regularPrice = cleanNumber(
+      item.originalPrice || item.original_price || item.regular_price || item.mrp || item.price
     );
-
-    const discountVal = cleanNumber(item.discountPercent || item.discountAmount || item.discount);
-
-    if (!rawOriginal || rawOriginal === price) {
-      if (item.discountPercent && cleanNumber(item.discountPercent) > 0) {
-        rawOriginal = price / (1 - cleanNumber(item.discountPercent) / 100);
-      } else if (discountVal > 0) {
-        rawOriginal = price + discountVal;
-      } else {
-        rawOriginal = price;
-      }
-    }
-
-    const discountAmount = Math.max(0, rawOriginal - price);
-    return acc + discountAmount * qty;
+    const salePrice = cleanNumber(item.price);
+    
+    // ডিসকাউন্ট অ্যামাউন্ট বের করা (Regular Price - Sale Price)
+    const itemDiscount = Math.max(0, regularPrice - salePrice);
+    return acc + itemDiscount * qty;
   }, 0);
 
-  // ৩. শিপিং ও ভ্যাট
-  const baseShippingCost = 150;
+  // ৩. নিট প্রোডাক্ট টোটাল (যেটা কাস্টমারকে পে করতে হবে) e.g., 4000 - 800 = 3200
   const netProductTotal = subtotal - totalDiscount;
-  const isFreeShipping = netProductTotal >= 3500 ? 0 : baseShippingCost;
+
+  // ৪. শিপিং ফি ক্যালকুলেশন
+  const baseShippingCost = 150;
+  const shippingFee = netProductTotal >= 3500 ? 0 : baseShippingCost;
   const vat = 0;
 
-  // ৪. ফাইনাল টোটাল
-  const total = Math.max(0, subtotal - totalDiscount + isFreeShipping + vat);
+  // ৫. ফাইনাল গ্র্যান্ড টোটাল
+  const total = Math.max(0, netProductTotal + shippingFee + vat);
 
   const totalItemsCount = displayItems.reduce(
-    (acc, item) => acc + cleanNumber(item.quantity || 1),
+    (acc, item) => acc + cleanNumber(item.quantity || item.qty || 1),
     0
   );
 
@@ -147,12 +129,69 @@ export default function Checkout() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  // 🚀 অর্ডার সাবমিট হ্যান্ডলার
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (cartItems.length > 0) {
-      dispatch(clearCart());
+
+    const isSameBilling = billingAddress === "same";
+
+    // 📦 ব্যাকএন্ড কন্ট্রোলারের সাথে ১০০% পারফেক্ট পে-লোড
+    const orderPayload = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      address: formData.address,
+      cityDistrict: formData.cityDistrict,
+      postalCode: formData.postalCode,
+      phone: formData.phone,
+      deliveryCharge: shippingFee,
+      
+      // Billing Address
+      billingFirstName: isSameBilling ? formData.firstName : formData.billingFirstName,
+      billingLastName: isSameBilling ? formData.lastName : formData.billingLastName,
+      billingAddressInput: isSameBilling ? formData.address : formData.billingAddressInput,
+      billingCity: isSameBilling ? formData.cityDistrict : formData.billingCity,
+      billingPostalCode: isSameBilling ? formData.postalCode : formData.billingPostalCode,
+      billingPhone: isSameBilling ? formData.phone : formData.billingPhone,
+
+      // Items Array
+      items: displayItems.map((item) => {
+        const regularPrice = cleanNumber(
+          item.originalPrice || item.original_price || item.regular_price || item.mrp || item.price
+        );
+        const salePrice = cleanNumber(item.price);
+        const discountVal = Math.max(0, regularPrice - salePrice);
+
+        return {
+          productId: item.productId || item.product_id || item.id,
+          variantId: item.variantId || item.variant_id || item.variant?.id || null,
+          name: item.name || item.product_name,
+          category: item.category || null,
+          color: item.color || null,
+          size: item.size || null,
+          price: regularPrice, // 🔑 এখানে Regular/Original Price (২০০0) যাবে
+          quantity: cleanNumber(item.quantity || item.qty || 1),
+          discount: discountVal, // 🔑 এখানে Discount Amount (৪০০) যাবে
+          image: item.image || null,
+        };
+      }),
+    };
+
+    try {
+      // Redux Async Thunk এর মাধ্যমে API কল
+      const response = await dispatch(createOrder(orderPayload)).unwrap();
+      
+      if (response?.orderId) {
+        setPlacedOrderId(response.orderId);
+      }
+
+      if (cartItems.length > 0) {
+        dispatch(clearCart());
+      }
+
+      setIsOrderConfirmed(true);
+    } catch (err) {
+      alert(err || "Failed to place order. Please try again.");
     }
-    setIsOrderConfirmed(true);
   };
 
   const summaryProps = {
@@ -183,6 +222,7 @@ export default function Checkout() {
         shippingMethod={shippingMethod}
         summaryProps={summaryProps}
         navigate={navigate}
+        orderId={placedOrderId}
       />
     );
   }
@@ -253,11 +293,27 @@ export default function Checkout() {
             handleInputChange={handleInputChange}
           />
 
+          {/* ⚠️ এরর মেসেজ */}
+          {orderError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+              {orderError}
+            </div>
+          )}
+
+          {/* 🟢 সাবমিট বাটন */}
           <button
             type="submit"
-            className="w-full bg-neutral-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-colors text-sm uppercase tracking-wider cursor-pointer"
+            disabled={isSubmitting}
+            className="w-full bg-neutral-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-colors text-sm uppercase tracking-wider cursor-pointer disabled:bg-neutral-400 disabled:cursor-not-allowed flex justify-center items-center gap-2"
           >
-            Complete Order
+            {isSubmitting ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                Placing Order...
+              </>
+            ) : (
+              "Complete Order"
+            )}
           </button>
         </div>
 
