@@ -1,5 +1,4 @@
 import { NavLink, useNavigate } from "react-router-dom";
-
 import logo from "../../assets/titto.logo.png";
 import { FaRegHeart, FaBars, FaTimes } from "react-icons/fa";
 import { MdOutlineShoppingCart, MdOutlinePerson } from "react-icons/md";
@@ -12,11 +11,12 @@ function Navbar() {
   const navigate = useNavigate();
 
   const { cartItems } = useSelector((state) => state.cart);
-  const { items : wishlistItems } = useSelector((state) => state.wishlist);
+  const { items: wishlistItems } = useSelector((state) => state.wishlist);
 
   const cartCount = cartItems.length;
   const wishlistCount = wishlistItems.length;
 
+  // Scroll detect
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -29,6 +29,15 @@ function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Prevent background scrolling when mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [isOpen]);
 
   const getLinkClassName = ({ isActive }) => {
     const baseClass =
@@ -52,7 +61,7 @@ function Navbar() {
       `}</style>
 
       {/* Logo Section */}
-      <div className="z-50 shrink-0">
+      <div className="z-50 shrink-0 cursor-pointer" onClick={() => navigate("/")}>
         <img src={logo} width="100px" alt="Titto Logo" />
       </div>
 
@@ -85,10 +94,10 @@ function Navbar() {
           </NavLink>
           <NavLink
             className={getLinkClassName}
-            to="/products"
+            to="/discounts"
             onClick={() => setIsOpen(false)}
           >
-            Products
+            Discounts 
           </NavLink>
           <NavLink
             className={getLinkClassName}
@@ -102,9 +111,10 @@ function Navbar() {
 
       {/* Right Actions Wrapper */}
       <div className="flex items-center gap-5 text-xl z-50">
+        {/* Wishlist Icon */}
         <div
-        className="indicator flex items-center justify-center"
-        onClick={() => navigate('/wishlist')} 
+          className="indicator flex items-center justify-center cursor-pointer"
+          onClick={() => navigate('/wishlist')} 
         >
           {wishlistCount > 0 && (
             <span className="indicator-item badge bg-red-500 text-white font-black text-[10px] scale-90 px-1.5 h-4 min-h-4 border-none select-none">
@@ -114,9 +124,9 @@ function Navbar() {
           <FaRegHeart className={iconClass}/>
         </div>
 
-        {/* 🛠️ DaisyUI Badge Component Added Here */}
+        {/* Cart Icon */}
         <div
-          className="indicator flex items-center justify-center"
+          className="indicator flex items-center justify-center cursor-pointer"
           onClick={() => navigate("/cart")}
         >
           {cartCount > 0 && (
@@ -127,6 +137,7 @@ function Navbar() {
           <MdOutlineShoppingCart className={iconClass} />
         </div>
 
+        {/* User Icon */}
         <MdOutlinePerson className={`hidden sm:block ${iconClass}`} />
 
         {/* Hamburger Toggle Button */}
@@ -135,10 +146,7 @@ function Navbar() {
           className={`lg:hidden focus:outline-none transition-colors ml-2 ${isScrolled || isOpen ? "text-white" : "text-black"}`}
         >
           {isOpen ? (
-            <FaTimes
-              size={26}
-              className={`${isScrolled ? "text-white" : "text-black"}`}
-            />
+            <FaTimes size={26} className="text-white" />
           ) : (
             <FaBars size={26} />
           )}

@@ -7,6 +7,7 @@ import Checkout from "../Components/checkout/Checkout";
 import Cart from "../Components/Shared/Cart";
 import Wishlist from "../Components/Shared/Wishlist";
 import Women from "../Pages/Women/Women";
+import Discounts from "../Pages/Discount/Discounts"; // 👈 ১. Discounts পেজ ইম্পোর্ট করা হলো
 //import NotFound from '../pages/NotFound';
 
 export const router = createBrowserRouter([
@@ -26,6 +27,10 @@ export const router = createBrowserRouter([
       {
         path: '/women',
         element: <Women />
+      },
+      {
+        path: '/discounts', // 👈 ২. Discounts Route যুক্ত করা হলো
+        element: <Discounts />
       },
       {
         path: "/product/:id",
