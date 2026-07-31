@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../../assets/titto.logo.png";
 import { FaRegHeart, FaBars, FaTimes } from "react-icons/fa";
-import { MdOutlineShoppingCart, MdOutlinePerson } from "react-icons/md";
+import { MdOutlineShoppingCart } from "react-icons/md";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
@@ -61,9 +61,9 @@ function Navbar() {
       `}</style>
 
       {/* Logo Section */}
-      <div className="z-50 shrink-0 cursor-pointer" onClick={() => navigate("/")}>
+      <NavLink to="/" className="z-50 shrink-0 cursor-pointer" onClick={() => navigate("/")}>
         <img src={logo} width="100px" alt="Titto Logo" />
-      </div>
+      </NavLink>
 
       {/* Navigation Links */}
       <div
@@ -138,7 +138,7 @@ function Navbar() {
         </div>
 
         {/* User Icon */}
-        <MdOutlinePerson className={`hidden sm:block ${iconClass}`} />
+        {/* <MdOutlinePerson className={`hidden sm:block ${iconClass} hidden`} /> */}
 
         {/* Hamburger Toggle Button */}
         <button

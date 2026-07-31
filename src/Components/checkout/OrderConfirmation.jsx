@@ -1,6 +1,7 @@
 import { FiCheck } from "react-icons/fi";
 import OrderSummaryContent from "./OrderSummaryContent";
 import { useEffect } from "react";
+import { NavLink } from "react-router-dom";
 
 export default function OrderConfirmation({
   formData,
@@ -138,12 +139,12 @@ export default function OrderConfirmation({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
             <p className="text-xs text-neutral-500">
               Need help?{" "}
-              <a
-                href="#"
+              <NavLink
+                to="/contact"
                 className="underline text-neutral-700 hover:text-black"
               >
                 Contact us
-              </a>
+              </NavLink>
             </p>
             <button
               onClick={() => navigate("/")}

@@ -1,3 +1,4 @@
+import { NavLink } from "react-router-dom";
 
 export default function PromotionalBanner() {
   return (
@@ -37,9 +38,9 @@ export default function PromotionalBanner() {
           <p className="text-neutral-500 text-sm md:text-sm tracking-wide uppercase font-medium mb-8">
             Offer available all shoes & products
           </p>
-          <button className="btn bg-[#ea4c3b] hover:bg-[#d63d2e] text-white border-none rounded-none px-10 font-bold tracking-wide shadow-md">
+          <NavLink to='/discounts' className="btn bg-[#ea4c3b] hover:bg-[#d63d2e] text-white border-none rounded-none px-10 font-bold tracking-wide shadow-md">
             Shop Now
-          </button>
+          </NavLink>
         </div>
 
         {/* RIGHT COLUMN: IMAGE & GRAPHICS */}

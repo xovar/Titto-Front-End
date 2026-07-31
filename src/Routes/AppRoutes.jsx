@@ -7,7 +7,8 @@ import Checkout from "../Components/checkout/Checkout";
 import Cart from "../Components/Shared/Cart";
 import Wishlist from "../Components/Shared/Wishlist";
 import Women from "../Pages/Women/Women";
-import Discounts from "../Pages/Discount/Discounts"; // 👈 ১. Discounts পেজ ইম্পোর্ট করা হলো
+import Discounts from "../Pages/Discount/Discounts";
+import ContactUs from "../Pages/Contact/Contact";
 //import NotFound from '../pages/NotFound';
 
 export const router = createBrowserRouter([
@@ -25,12 +26,16 @@ export const router = createBrowserRouter([
         element: <Men />,
       },
       {
-        path: '/women',
-        element: <Women />
+        path: "/women",
+        element: <Women />,
       },
       {
-        path: '/discounts', // 👈 ২. Discounts Route যুক্ত করা হলো
-        element: <Discounts />
+        path: "/discounts",
+        element: <Discounts />,
+      },
+      {
+        path: "/contact",
+        element: <ContactUs />,
       },
       {
         path: "/product/:id",
