@@ -60,10 +60,10 @@ export default function ContactUs() {
               <div>
                 <h3 className="text-lg font-bold text-neutral-800">Phone Number</h3>
                 <a
-                  href="tel:01831698522"
+                  href="tel:01703-305033"
                   className="mt-1 block text-sm text-neutral-600 hover:text-[#ea4c3b] transition-colors font-medium"
                 >
-                  01831698522
+                  01703-305033
                 </a>
               </div>
             </div>

@@ -38,7 +38,7 @@ export default function FooterNewsletter() {
             <h4 className="text-base font-bold text-white tracking-wide">Contact Us</h4>
             <div className="space-y-2 text-sm text-neutral-400">
               <p className="flex items-center gap-2">
-                <FaPhoneAlt className="text-[#ea4c3b]" /> 01831698522
+                <FaPhoneAlt className="text-[#ea4c3b]" /> 01703-305033
               </p>
               <p className="flex items-center gap-2">
                 <FaEnvelope className="text-[#ea4c3b]" /> support@titto.com.bd
@@ -53,7 +53,7 @@ export default function FooterNewsletter() {
           <p>© 2026 Titto. All rights reserved.</p>
           
           <div className="flex items-center gap-5 text-neutral-400">
-            <a href="#" className="hover:text-[#ea4c3b] cursor-pointer transition-colors"><FaFacebook size={18} /></a>
+            <a href="https://www.facebook.com/Tittofootwear" className="hover:text-[#ea4c3b] cursor-pointer transition-colors"><FaFacebook size={18} /></a>
             <a href="#" className="hover:text-[#ea4c3b] cursor-pointer transition-colors"><FaTwitter size={18} /></a>
             <a href="#" className="hover:text-[#ea4c3b] cursor-pointer transition-colors"><FaInstagram size={18} /></a>
           </div>

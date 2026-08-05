@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation } from "swiper/modules";
-import { useNavigate } from "react-router-dom"; // 👈 useNavigate ইম্পোর্ট করা হলো
+import { NavLink, useNavigate } from "react-router-dom"; // 👈 useNavigate ইম্পোর্ট করা হলো
 import { useMemo } from "react";
 
 // Swiper CSS
@@ -137,10 +137,6 @@ export default function BestSeller() {
                         <span className="text-[11px] font-medium text-neutral-400 tracking-wide">
                           {product.category?.name || "General"}
                         </span>
-                        {/* Sold count display */}
-                        <span className="text-[10px] font-bold bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded">
-                          {product.effectiveSold} Sold
-                        </span>
                       </div>
 
                       <h3 className="text-[15px] font-bold text-neutral-800 tracking-tight transition-colors duration-200 mb-1.5 truncate">
@@ -175,9 +171,9 @@ export default function BestSeller() {
 
       {/* SEE MORE BUTTON */}
       <div className="mt-12 flex justify-center">
-        <button className="btn btn-outline btn-error hover:text-white hover:bg-red-500 rounded-none px-8">
+        <NavLink to="/discounts" className="btn btn-outline btn-error hover:text-white hover:bg-red-500 rounded-none px-8">
           SEE MORE
-        </button>
+        </NavLink>
       </div>
     </div>
   );
