@@ -17,7 +17,7 @@ export default function FooterNewsletter() {
               <img src={logo} className="h-10" alt="" />
             </NavLink>
             <p className="text-sm text-neutral-400 leading-relaxed max-w-sm">
-              Savar Sena Shopping Complex, Level 2, Shop Number 322, Savar, Dhaka.
+              Shop Sena Shopping Complex Dhaka. 1344, 3rd floor level 2, Shop no: C2011 c212 c213 c214 c215. C216
             </p>
           </div>
 
