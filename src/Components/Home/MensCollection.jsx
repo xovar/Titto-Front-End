@@ -1,0 +1,159 @@
+import { useSelector } from "react-redux";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation } from "swiper/modules";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+
+// Swiper CSS
+import "swiper/css";
+import "swiper/css/navigation";
+
+export default function MensCollection() {
+  const navigate = useNavigate();
+
+  // ১. Redux Store থেকে প্রোডাক্ট ডাটা নিয়ে আসা
+  const { items: products, loading } = useSelector((state) => state.products);
+
+  // ২. Men ক্যাটাগরির প্রোডাক্ট ফিল্টারিং লজিক (Gender: 1 = Male)
+  const mensProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
+
+    // রেফারেন্স পেজের ডাটা স্ট্রাকচার অনুযায়ী জেন্ডার চেক
+    return products.filter((product) => Number(product.gender) === 1);
+  }, [products]);
+
+  // লোডিং স্টেট হ্যান্ডলার
+  if (loading) {
+    return (
+      <div className="w-full py-16 text-center text-neutral-500">
+        Loading Men's Collection...
+      </div>
+    );
+  }
+
+  // ডাটা না থাকলে হ্যান্ডলার
+  if (!mensProducts || mensProducts.length === 0) {
+    return null; // Men ক্যাটাগরিতে কোনো প্রোডাক্ট না থাকলে সেকশনটি দেখাবে না
+  }
+
+  return (
+    <div className="w-full bg-white py-16 px-4 md:px-12 lg:px-16 font-sans select-none">
+      <div className="max-w-360 mx-auto">
+        {/* HEADER SECTION */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-2 tracking-tight">
+            Men's Collection
+          </h2>
+          <p className="text-neutral-500 text-sm mt-2">
+            Elevate your style with our premium men's fashion.
+          </p>
+        </div>
+
+        {/* SWIPER CAROUSEL WRAPPER */}
+        <div className="relative group/slider px-2">
+          <Swiper
+            modules={[Autoplay, Navigation]}
+            spaceBetween={24}
+            slidesPerView={1}
+            loop={mensProducts.length > 4}
+            autoplay={{
+              delay: 2500,
+              disableOnInteraction: false,
+              pauseOnMouseEnter: true,
+            }}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 4 },
+            }}
+            className="w-full py-4"
+          >
+            {mensProducts.map((product) => {
+              // প্রোডাক্ট ডাটা থেকে ইমেজ প্রসেস করা
+              const displayImage =
+                product.variants?.[0]?.images?.[0] ||
+                product.images?.[0] ||
+                "https://via.placeholder.com/300";
+
+              // ডিসকাউন্ট ক্যালকুলেশন
+              const hasDiscount = product.discount && Number(product.discount) > 0;
+              const originalPrice = parseFloat(product.price);
+              const discountedPrice = hasDiscount
+                ? originalPrice - (originalPrice * parseFloat(product.discount)) / 100
+                : originalPrice;
+
+              // কার্ডে ক্লিক করার হ্যান্ডলার ফাংশন
+              const handleCardClick = () => {
+                navigate(`/product/${product.id}`);
+              };
+
+              return (
+                <SwiperSlide key={product.id}>
+                  <div 
+                    onClick={handleCardClick}
+                    className="flex flex-col text-left group bg-white cursor-pointer h-full"
+                  >
+                    {/* Product Image Card Container Box */}
+                    <div className="w-full h-72 border border-neutral-200/80 rounded-xl bg-white flex items-center justify-center p-6 relative overflow-hidden group-hover:border-neutral-300 transition-colors duration-300">
+                      
+                      {/* Discount Tag */}
+                      {hasDiscount && (
+                        <span className="absolute z-10 top-4 left-4 bg-red-500 text-white font-extrabold text-[11px] px-2 py-0.5 rounded-sm tracking-wide shadow-xs">
+                          -{product.discount}%
+                        </span>
+                      )}
+
+                      {/* Main Product Image Asset */}
+                      <img
+                        src={displayImage}
+                        alt={product.name}
+                        className="w-full h-full object-contain z-0 group-hover:scale-102 transition-transform duration-500"
+                      />
+                    </div>
+
+                    {/* Product Metadata Info Block */}
+                    <div className="pt-4 px-1 flex flex-col">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-medium text-neutral-400 tracking-wide">
+                          {product.category?.name || "Men"}
+                        </span>
+                      </div>
+
+                      <h3 className="text-[15px] font-bold text-neutral-800 tracking-tight transition-colors duration-200 mb-1.5 truncate">
+                        {product.name}
+                      </h3>
+
+                      {/* Dynamic Price Calculation */}
+                      <div className="text-sm font-medium text-neutral-500">
+                        {hasDiscount ? (
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-neutral-800">
+                              ৳{discountedPrice.toFixed(2)}
+                            </span>
+                            <span className="line-through text-xs text-neutral-400">
+                              ৳{originalPrice.toFixed(2)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-bold text-neutral-800">
+                            ৳{originalPrice.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
+        </div>
+      </div>
+
+      {/* SEE MORE BUTTON */}
+      <div className="mt-12 flex justify-center">
+        <NavLink to="/men" className="btn btn-outline btn-error hover:text-white hover:bg-red-500 rounded-none px-8">
+          SEE MORE
+        </NavLink>
+      </div>
+    </div>
+  );
+}
