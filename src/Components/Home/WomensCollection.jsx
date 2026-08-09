@@ -19,7 +19,7 @@ export default function WomensCollection() {
     if (!products || products.length === 0) return [];
 
     // জেন্ডার ২ (Female) ফিল্টার করা
-    return products.filter((product) => Number(product.gender) === 2);
+    return products.filter((product) => Number(product.gender) === 0);
   }, [products]);
 
   // লোডিং স্টেট হ্যান্ডলার
@@ -126,15 +126,15 @@ export default function WomensCollection() {
                       <div className="text-sm font-medium text-neutral-500">
                         {hasDiscount ? (
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-neutral-800">
+                            <span className="font-bold font-['Bangla'] text-neutral-800">
                               ৳{discountedPrice.toFixed(2)}
                             </span>
-                            <span className="line-through text-xs text-neutral-400">
+                            <span className="line-through font-['Bangla'] text-xs text-neutral-400">
                               ৳{originalPrice.toFixed(2)}
                             </span>
                           </div>
                         ) : (
-                          <span className="font-bold text-neutral-800">
+                          <span className="font-bold font-['Bangla'] text-neutral-800">
                             ৳{originalPrice.toFixed(2)}
                           </span>
                         )}

@@ -28,9 +28,10 @@ export default function SingleProduct() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // ⚡ Size Guide Modal State
+  // ⚡ Size Guide Modal & Description Toggle State
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false); // 🖼️ Lightbox Gallery State
+  const [isDescExpanded, setIsDescExpanded] = useState(false); // 📝 Description Expand State
 
   // ⚡ ১. রিডাক্স স্টোর থেকে রিয়েল ডাটা এবং লোডিং স্টেট আনা
   const { items: products, loading } = useSelector((state) => state.products);
@@ -122,7 +123,7 @@ export default function SingleProduct() {
       ? Number((numericOriginalPrice * (1 - discountPercent / 100)).toFixed(0))
       : numericOriginalPrice;
 
-  // 🔍 Magnifier Box লজিক (আপনার অরিজিনাল মাউস মুভ ফাংশন)
+  // 🔍 Magnifier Box লজিক
   const handleMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     
@@ -259,6 +260,9 @@ export default function SingleProduct() {
     );
   }
 
+  // 🔍 Helper Function: checks if string contains HTML tags
+  const isHtmlString = (str) => /<[a-z][\s\S]*>/i.test(str);
+
   return (
     <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative">
       <div className="flex flex-col lg:flex-row gap-12 items-start">
@@ -309,7 +313,7 @@ export default function SingleProduct() {
               ))}
             </Swiper>
 
-            {/* 🔍 Magnifier Glass Lens (আপনার মূল গ্লাস) */}
+            {/* Magnifier Glass Lens */}
             {isZoomed && (
               <div
                 className="absolute border border-neutral-300 bg-black/5 pointer-events-none z-30 shadow-sm"
@@ -322,7 +326,7 @@ export default function SingleProduct() {
               />
             )}
 
-            {/* 🔍 Full Box Zoom Window (আপনার মূল জুম উইন্ডো) */}
+            {/* Full Box Zoom Window */}
             {isZoomed && currentActiveImage && (
               <div
                 className="absolute inset-0 z-40 border border-neutral-200 bg-white shadow-2xl pointer-events-none rounded-2xl"
@@ -410,9 +414,41 @@ export default function SingleProduct() {
             </div>
           </div>
 
-          <p className="text-neutral-500 text-sm leading-relaxed mb-8 max-w-xl">
-            {product.description}
-          </p>
+          {/* 📝 IMPROVED DYNAMIC DESCRIPTION SECTION */}
+          <div className="mb-8 max-w-xl">
+            {product.description ? (
+              <div className="flex flex-col items-start gap-1">
+                {isHtmlString(product.description) ? (
+                  <div
+                    className={`text-neutral-600 text-sm leading-relaxed ${
+                      !isDescExpanded ? "line-clamp-3" : ""
+                    }`}
+                    dangerouslySetInnerHTML={{ __html: product.description }}
+                  />
+                ) : (
+                  <p className="text-neutral-600 text-sm leading-relaxed whitespace-pre-line">
+                    {isDescExpanded || product.description.length <= 220
+                      ? product.description
+                      : `${product.description.slice(0, 220)}...`}
+                  </p>
+                )}
+
+                {product.description.length > 220 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsDescExpanded((prev) => !prev)}
+                    className="text-xs font-bold text-neutral-900 hover:text-[#ea4c3b] underline mt-1 cursor-pointer transition-colors"
+                  >
+                    {isDescExpanded ? "Read Less ▲" : "Read More ▼"}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="text-neutral-400 text-sm italic">
+                No description available for this product.
+              </p>
+            )}
+          </div>
 
           {/* COLOR SELECTOR */}
           {availableColors.length > 0 && (

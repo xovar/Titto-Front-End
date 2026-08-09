@@ -152,57 +152,57 @@ export default function ProductCard({ product, viewMode = "grid" }) {
     <>
       <div
         onClick={handleCardClick}
-        className={`relative border border-neutral-200 rounded-2xl bg-white hover:shadow-xl transition-shadow duration-300 group/card cursor-pointer flex ${
-          isList ? "flex-row items-center gap-6 w-full" : "flex-col h-full"
+        className={`relative border border-neutral-200/80 rounded-2xl bg-white hover:shadow-xl transition-all duration-300 group/card cursor-pointer flex ${
+          isList ? "flex-row items-center gap-6 w-full p-2" : "flex-col h-full"
         }`}
       >
         {/* Discount Badge */}
         {product.discount && (
-          <div className="absolute top-4 left-4 bg-[#ea4c3b] text-white text-[10px] font-bold px-2 py-1 rounded z-10 pointer-events-none">
+          <div className="absolute top-3 left-3 bg-[#ea4c3b] text-white text-[10px] font-bold px-2 py-0.5 rounded z-20 pointer-events-none shadow-xs">
             -{product.discount}%
           </div>
         )}
 
         {/* Sold Out Tag */}
         {currentStock === 0 && (
-          <div className="absolute top-4 right-4 bg-black text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded z-10 border border-neutral-800 select-none pointer-events-none">
+          <div className="absolute top-3 right-3 bg-black text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded z-20 border border-neutral-800 select-none pointer-events-none">
             Sold Out
           </div>
         )}
 
-        {/* 🟢 1. Hover Overlay-তে pointer-events-none যোগ করা হয়েছে যেন মোবাইলে টাচ ব্লক না করে */}
-        <div className="absolute inset-0 w-full h-full rounded-2xl bg-black/60 flex justify-center items-end pb-5 opacity-0 group-hover/card:opacity-100 pointer-events-none group-hover/card:pointer-events-auto transition-opacity duration-300 z-20">
-          <button
-            className={`btn btn-wide cursor-pointer ${
-              currentStock === 0
-                ? "btn-disabled bg-neutral-800 text-neutral-500 border-none"
-                : ""
-            }`}
-            disabled={currentStock === 0}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (currentStock > 0) setIsModalOpen(true);
-            }}
-          >
-            {currentStock > 0 ? "Quick View" : "Out of Stock"}
-          </button>
-        </div>
-
-        {/* Image Container */}
+        {/* Image Container Box */}
         <div
-          /* 🟢 2. Swiper কন্টেইনারের ভেতরের ক্লিক/সোয়াইপ ইভেন্ট যেন মূল কার্ডকে নেভিগেট না করে */
           onClick={(e) => e.stopPropagation()}
           className={`${
-            isList ? "w-44 h-44 shrink-0" : "w-full aspect-square mb-4"
+            isList ? "w-44 h-44 shrink-0 mb-0" : "w-full aspect-square mb-3"
           } relative overflow-hidden rounded-xl bg-neutral-50 border border-neutral-100 z-10`}
         >
+          {/* 🟢 HOVER OVERLAY - এখন শুধু ইমেজের ওপরেই দেখাবে */}
+          <div className="absolute inset-0 w-full h-full bg-black/40 flex justify-center items-end p-4 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-30 pointer-events-none group-hover/card:pointer-events-auto">
+            <button
+              type="button"
+              className={`w-full max-w-[80%] py-2.5 px-4 bg-white text-neutral-900 font-bold text-sm rounded-lg shadow-md hover:bg-neutral-100 transition-colors duration-200 ${
+                currentStock === 0
+                  ? "opacity-50 cursor-not-allowed bg-neutral-200 text-neutral-500"
+                  : "cursor-pointer"
+              }`}
+              disabled={currentStock === 0}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (currentStock > 0) setIsModalOpen(true);
+              }}
+            >
+              {currentStock > 0 ? "Quick View" : "Out of Stock"}
+            </button>
+          </div>
+
+          {/* Swiper Image Carousel */}
           <Swiper
             key={`${product.id}-${selectedColor}`}
             modules={[Pagination, A11y, Autoplay]}
             spaceBetween={0}
             slidesPerView={1}
             loop={displayImages.length > 1}
-            /* 🟢 3. মোবাইল টাচ ও সোয়াইপ ফ্রেন্ডলি প্রপস */
             allowTouchMove={true}
             preventClicks={true}
             preventClicksPropagation={true}
@@ -237,10 +237,10 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           </Swiper>
         </div>
 
-        {/* Product Metadata */}
+        {/* Product Metadata Info Block */}
         <div
           className={`flex flex-col items-start text-left pb-4 pl-4 pr-4 w-full ${
-            isList ? "flex-1" : "mt-auto"
+            isList ? "flex-1 pb-0 pl-0" : "mt-auto"
           }`}
         >
           <span className="text-[11px] text-neutral-400 uppercase tracking-wider mb-1">
@@ -372,7 +372,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
           {/* Price Section */}
           <div className="flex items-center gap-2 text-sm mt-auto">
             {discountPercent > 0 && (
-              <span className="flex items-center text-[15px] text-[#929090] font-['Bangla'] font-bold ">
+              <span className="flex items-center text-[15px] text-[#929090] font-['Bangla'] font-bold">
                 <span className="text-[18px]">৳</span>
                 <span className="line-through ml-0.5">
                   {numericOriginalPrice.toFixed(2)}
@@ -380,7 +380,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
               </span>
             )}
 
-            <span className="flex items-center text-[15px] font-['Bangla'] font-bold">
+            <span className="flex items-center text-[15px] font-['Bangla'] font-bold text-neutral-900">
               <span className="text-[18px]">৳</span>
               <span className="ml-0.5">{numericPrice.toFixed(2)}</span>
             </span>

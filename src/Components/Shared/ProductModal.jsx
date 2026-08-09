@@ -3,13 +3,26 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { addToCart } from "../../store/features/cart/cartSlice";
 import { addToWishlist } from "../../store/features/wishList/wishListSlice";
-import { FiX, FiHeart, FiShoppingBag } from "react-icons/fi";
+import {
+  FiX,
+  FiHeart,
+  FiShoppingBag,
+  FiMaximize2,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 import { LuRuler } from "react-icons/lu";
 import { toast } from "react-toastify";
 import axios from "axios";
 
-// ─── 1. SUB-COMPONENT: IMAGE GALLERY WITH ZOOM ──────────────────────────────
-const ImageGallery = ({ displayImages, activeImageIndex, setActiveImageIndex, productName }) => {
+// ─── 1. SUB-COMPONENT: IMAGE GALLERY WITH ZOOM & LIGHTBOX TRIGGER ───────────
+const ImageGallery = ({
+  displayImages,
+  activeImageIndex,
+  setActiveImageIndex,
+  productName,
+  onOpenLightbox,
+}) => {
   const [isZoomed, setIsZoomed] = useState(false);
   const [lensPos, setLensPos] = useState({ x: 0, y: 0 });
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
@@ -40,11 +53,25 @@ const ImageGallery = ({ displayImages, activeImageIndex, setActiveImageIndex, pr
     <div className="flex-1 w-full flex flex-col gap-4 relative">
       <div
         ref={imageContainerRef}
-        className="w-full aspect-square md:h-100 bg-white border border-neutral-100 rounded-2xl relative overflow-hidden flex items-center justify-center select-none cursor-crosshair group"
+        className="w-full aspect-square md:h-100 bg-white border border-neutral-100 rounded-2xl relative overflow-hidden flex items-center justify-center select-none cursor-pointer group"
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsZoomed(true)}
         onMouseLeave={() => setIsZoomed(false)}
+        onClick={onOpenLightbox}
       >
+        {/* Full View Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenLightbox();
+          }}
+          className="absolute top-3 right-3 z-30 bg-black/60 hover:bg-black text-white p-2 rounded-full backdrop-blur-xs transition-all cursor-pointer opacity-80 hover:opacity-100 flex items-center gap-1 text-xs font-medium px-3"
+          title="Click to view full image"
+        >
+          <FiMaximize2 className="w-3.5 h-3.5" /> Full View
+        </button>
+
         <img
           src={currentImage}
           alt={productName || "Product view"}
@@ -197,6 +224,8 @@ export default function ProductModal({
   const [userSelectedColor, setUserSelectedColor] = useState("");
   const [userSelectedSize, setUserSelectedSize] = useState("");
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false); // 🖼️ Full View / Lightbox State
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const selectedColor = userSelectedColor || availableColors[0]?.name || "";
 
@@ -255,6 +284,22 @@ export default function ProductModal({
     };
   }, [product?.price, product?.discount]);
 
+  // ⌨️ Lightbox Keyboard Navigation Listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isLightboxOpen) return;
+      if (e.key === "Escape") setIsLightboxOpen(false);
+      if (e.key === "ArrowLeft") {
+        setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : displayImages.length - 1));
+      }
+      if (e.key === "ArrowRight") {
+        setActiveImageIndex((prev) => (prev < displayImages.length - 1 ? prev + 1 : 0));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLightboxOpen, displayImages.length]);
+
   if (!isOpen || !product) return null;
 
   const incrementQty = () => setQuantity((prev) => prev + 1);
@@ -290,7 +335,6 @@ export default function ProductModal({
       return;
     }
 
-    // Selected Size details and stock check
     const sizeObj = activeVariant?.sizes?.find(
       (s) => String(s.size).trim().toLowerCase() === String(currentSizeToShow).trim().toLowerCase()
     );
@@ -311,7 +355,7 @@ export default function ProductModal({
       price: finalPrice,
       originalPrice: originalPrice,
       discount: product?.discount,
-      stock: selectedSizeStock, // 🟢 কার্টের সাথে স্টক সমন্বয় করতে স্টক যোগ করে দেওয়া হলো
+      stock: selectedSizeStock,
       image: displayImages[0] || "https://via.placeholder.com/150",
       category: product?.category?.name || "",
     };
@@ -335,6 +379,12 @@ export default function ProductModal({
       navigate("/checkout", { state: { checkoutItem: orderPayload } });
     }
   };
+
+  const descriptionText =
+    product?.description ||
+    "Classic and comfortable premium product built for daily lifestyle and active sports durability.";
+  const maxCharLimit = 120;
+  const isLongDescription = descriptionText.length > maxCharLimit;
 
   return (
     <>
@@ -362,6 +412,7 @@ export default function ProductModal({
             activeImageIndex={activeImageIndex}
             setActiveImageIndex={setActiveImageIndex}
             productName={product?.name}
+            onOpenLightbox={() => setIsLightboxOpen(true)}
           />
 
           {/* Right Column: Information Panel */}
@@ -385,9 +436,20 @@ export default function ProductModal({
               </div>
             </div>
 
+            {/* DESCRIPTION SECTION */}
             <p className="text-neutral-500 text-xs md:text-sm leading-relaxed mb-6 font-normal max-w-md">
-              {product.description ||
-                "Classic and comfortable premium product built for daily lifestyle and active sports durability."}
+              {!isExpanded && isLongDescription
+                ? `${descriptionText.slice(0, maxCharLimit)}...`
+                : descriptionText}
+              {isLongDescription && (
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-black font-semibold underline underline-offset-2 ml-1 cursor-pointer hover:text-neutral-700 transition-colors inline-block"
+                >
+                  {isExpanded ? "Show Less" : "Read More"}
+                </button>
+              )}
             </p>
 
             {/* Selectors Section */}
@@ -406,7 +468,6 @@ export default function ProductModal({
                       .slice()
                       .sort((a, b) => Number(a) - Number(b))
                       .map((size) => {
-                        // 🟢 ১. উক্ত সাইজের অবজেক্ট এবং স্টক চেক
                         const sizeObj = activeVariant?.sizes?.find(
                           (s) => String(s.size).trim().toLowerCase() === String(size).trim().toLowerCase()
                         );
@@ -570,6 +631,89 @@ export default function ProductModal({
           </div>
         </div>
       </div>
+
+      {/* 🖼️ FULLSCREEN LIGHTBOX GALLERY MODAL */}
+      {isLightboxOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 select-none animate-fadeIn">
+          {/* Top Bar */}
+          <div className="w-full flex items-center justify-between text-white z-10 px-2">
+            <span className="text-sm font-semibold text-neutral-300 tracking-wider">
+              {activeImageIndex + 1} / {displayImages.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsLightboxOpen(false)}
+              className="text-neutral-300 hover:text-white p-2 rounded-full bg-neutral-800/80 hover:bg-neutral-700 transition-all cursor-pointer"
+            >
+              <FiX className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Center Main Image Container */}
+          <div className="relative flex-1 w-full flex items-center justify-center my-auto overflow-hidden">
+            {/* Prev Button */}
+            {displayImages.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveImageIndex((prev) =>
+                    prev > 0 ? prev - 1 : displayImages.length - 1
+                  )
+                }
+                className="absolute left-2 sm:left-6 z-20 text-white p-3 rounded-full bg-neutral-900/80 hover:bg-black border border-neutral-700 transition-all cursor-pointer"
+              >
+                <FiChevronLeft className="w-7 h-7" />
+              </button>
+            )}
+
+            {/* Lightbox Main Image */}
+            <img
+              src={displayImages[activeImageIndex]}
+              alt={product.name || "Product Full View"}
+              className="max-w-full max-h-[75vh] object-contain mx-auto drop-shadow-2xl transition-all duration-300"
+            />
+
+            {/* Next Button */}
+            {displayImages.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveImageIndex((prev) =>
+                    prev < displayImages.length - 1 ? prev + 1 : 0
+                  )
+                }
+                className="absolute right-2 sm:right-6 z-20 text-white p-3 rounded-full bg-neutral-900/80 hover:bg-black border border-neutral-700 transition-all cursor-pointer"
+              >
+                <FiChevronRight className="w-7 h-7" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails Navigation Strip */}
+          {displayImages.length > 1 && (
+            <div className="w-full flex justify-center items-center gap-3 overflow-x-auto py-2 z-10 max-w-xl">
+              {displayImages.map((imgUrl, idx) => (
+                <button
+                  key={`lightbox-thumb-${idx}`}
+                  type="button"
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all cursor-pointer shrink-0 ${
+                    activeImageIndex === idx
+                      ? "border-white scale-105 opacity-100"
+                      : "border-neutral-700 opacity-40 hover:opacity-80"
+                  }`}
+                >
+                  <img
+                    src={imgUrl}
+                    alt="lightbox thumb"
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* SIZE GUIDE POPUP */}
       <SizeGuideModal
