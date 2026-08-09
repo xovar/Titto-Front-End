@@ -9,6 +9,7 @@ import {
   FiChevronRight,
   FiArrowLeft,
   FiX,
+  FiMaximize2,
 } from "react-icons/fi";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
@@ -29,6 +30,7 @@ export default function SingleProduct() {
 
   // ⚡ Size Guide Modal State
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false); // 🖼️ Lightbox Gallery State
 
   // ⚡ ১. রিডাক্স স্টোর থেকে রিয়েল ডাটা এবং লোডিং স্টেট আনা
   const { items: products, loading } = useSelector((state) => state.products);
@@ -48,7 +50,7 @@ export default function SingleProduct() {
   const [swiperRef, setSwiperRef] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  // 🔍 Magnifier Box State
+  // 🔍 Magnifier Box State (আপনার অরিজিনাল জুম স্টেট)
   const [isZoomed, setIsZoomed] = useState(false);
   const [lensPos, setLensPos] = useState({ x: 0, y: 0 });
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
@@ -120,7 +122,7 @@ export default function SingleProduct() {
       ? Number((numericOriginalPrice * (1 - discountPercent / 100)).toFixed(0))
       : numericOriginalPrice;
 
-  // 🔍 Magnifier Box লজিক
+  // 🔍 Magnifier Box লজিক (আপনার অরিজিনাল মাউস মুভ ফাংশন)
   const handleMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     
@@ -149,6 +151,22 @@ export default function SingleProduct() {
     setActiveImageIndex(index);
     if (swiperRef) swiperRef.slideTo(index);
   };
+
+  // ⌨️ Lightbox Navigation Event Listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isLightboxOpen) return;
+      if (e.key === "Escape") setIsLightboxOpen(false);
+      if (e.key === "ArrowLeft") {
+        setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : displayImages.length - 1));
+      }
+      if (e.key === "ArrowRight") {
+        setActiveImageIndex((prev) => (prev < displayImages.length - 1 ? prev + 1 : 0));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLightboxOpen, displayImages.length]);
 
   // 💖 উইশলিস্ট ক্লিক হ্যান্ডলার
   const handleWishlistClick = () => {
@@ -180,7 +198,6 @@ export default function SingleProduct() {
       return;
     }
 
-    // স্টক চেক
     const sizeObj = activeVariant?.sizes?.find(
       (s) => String(s.size).trim().toLowerCase() === String(currentSizeToShow).trim().toLowerCase()
     );
@@ -201,7 +218,7 @@ export default function SingleProduct() {
       price: numericPrice,
       originalPrice: numericOriginalPrice,
       discount: product?.discount,
-      stock: selectedSizeStock, // 🟢 স্টক যোগ করা হয়েছে
+      stock: selectedSizeStock,
       image: displayImages[0] || "https://via.placeholder.com/150",
       category: product?.category?.name || "",
     };
@@ -215,7 +232,6 @@ export default function SingleProduct() {
     }
   };
 
-  /* ⏳ কন্ডিশন ১: যদি রিডাক্স ডাটা ব্যাকএন্ড থেকে লোড হতে থাকে */
   if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3 bg-white">
@@ -227,7 +243,6 @@ export default function SingleProduct() {
     );
   }
 
-  /* ❌ কন্ডিশন ২: লোডিং শেষ কিন্তু প্রোডাক্ট খুঁজে পাওয়া যায়নি */
   if (!product) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 bg-white">
@@ -250,10 +265,24 @@ export default function SingleProduct() {
         {/* Left Column: Image Area & Grid Thumbnails */}
         <div className="w-full lg:w-1/2 flex flex-col gap-4">
           <div 
-            className="w-full aspect-square border border-neutral-200 rounded-2xl relative flex items-center justify-center overflow-hidden bg-white cursor-zoom-in"
+            className="w-full aspect-square border border-neutral-200 rounded-2xl relative flex items-center justify-center overflow-hidden bg-white cursor-pointer group"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setIsZoomed(false)}
+            onClick={() => setIsLightboxOpen(true)}
           >
+            {/* Full View Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLightboxOpen(true);
+              }}
+              className="absolute top-3 right-3 z-30 bg-black/60 hover:bg-black text-white p-2 rounded-full backdrop-blur-xs transition-all cursor-pointer opacity-80 hover:opacity-100 flex items-center gap-1 text-xs font-medium px-3"
+              title="Click to view full gallery"
+            >
+              <FiMaximize2 className="w-4 h-4" /> Full View
+            </button>
+
             <Swiper
               onSwiper={setSwiperRef}
               key={`single-${product.id}-${selectedColor}`}
@@ -280,7 +309,7 @@ export default function SingleProduct() {
               ))}
             </Swiper>
 
-            {/* 🔍 Magnifier Glass Lens */}
+            {/* 🔍 Magnifier Glass Lens (আপনার মূল গ্লাস) */}
             {isZoomed && (
               <div
                 className="absolute border border-neutral-300 bg-black/5 pointer-events-none z-30 shadow-sm"
@@ -293,7 +322,7 @@ export default function SingleProduct() {
               />
             )}
 
-            {/* 🔍 Full Box Zoom Window */}
+            {/* 🔍 Full Box Zoom Window (আপনার মূল জুম উইন্ডো) */}
             {isZoomed && currentActiveImage && (
               <div
                 className="absolute inset-0 z-40 border border-neutral-200 bg-white shadow-2xl pointer-events-none rounded-2xl"
@@ -430,7 +459,6 @@ export default function SingleProduct() {
                   .slice()
                   .sort((a, b) => Number(a) - Number(b))
                   .map((size) => {
-                    // 🟢 ১. সাইজ অনুযায়ী স্টক বের করা
                     const sizeObj = activeVariant?.sizes?.find(
                       (s) => String(s.size).trim().toLowerCase() === String(size).trim().toLowerCase()
                     );
@@ -575,6 +603,89 @@ export default function SingleProduct() {
           </div>
         </div>
       </div>
+
+      {/* 🖼️ FULLSCREEN LIGHTBOX GALLERY MODAL */}
+      {isLightboxOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 select-none animate-fadeIn">
+          {/* Top Bar (Close & Counter) */}
+          <div className="w-full flex items-center justify-between text-white z-10 px-2">
+            <span className="text-sm font-semibold text-neutral-300 tracking-wider">
+              {activeImageIndex + 1} / {displayImages.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsLightboxOpen(false)}
+              className="text-neutral-300 hover:text-white p-2 rounded-full bg-neutral-800/80 hover:bg-neutral-700 transition-all cursor-pointer"
+            >
+              <FiX className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Center Image Container with Navigation */}
+          <div className="relative flex-1 w-full flex items-center justify-center my-auto overflow-hidden">
+            {/* Prev Button */}
+            {displayImages.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveImageIndex((prev) =>
+                    prev > 0 ? prev - 1 : displayImages.length - 1
+                  )
+                }
+                className="absolute left-2 sm:left-6 z-20 text-white p-3 rounded-full bg-neutral-900/80 hover:bg-black border border-neutral-700 transition-all cursor-pointer"
+              >
+                <FiChevronLeft className="w-7 h-7" />
+              </button>
+            )}
+
+            {/* Lightbox Main Image */}
+            <img
+              src={displayImages[activeImageIndex]}
+              alt={product.name}
+              className="max-w-full max-h-[75vh] object-contain mx-auto drop-shadow-2xl transition-all duration-300"
+            />
+
+            {/* Next Button */}
+            {displayImages.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveImageIndex((prev) =>
+                    prev < displayImages.length - 1 ? prev + 1 : 0
+                  )
+                }
+                className="absolute right-2 sm:right-6 z-20 text-white p-3 rounded-full bg-neutral-900/80 hover:bg-black border border-neutral-700 transition-all cursor-pointer"
+              >
+                <FiChevronRight className="w-7 h-7" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails Navigation Strip */}
+          {displayImages.length > 1 && (
+            <div className="w-full flex justify-center items-center gap-3 overflow-x-auto py-2 z-10 max-w-xl">
+              {displayImages.map((imgUrl, idx) => (
+                <button
+                  key={`lightbox-thumb-${idx}`}
+                  type="button"
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all cursor-pointer shrink-0 ${
+                    activeImageIndex === idx
+                      ? "border-red-500 scale-105 opacity-100"
+                      : "border-neutral-700 opacity-40 hover:opacity-80"
+                  }`}
+                >
+                  <img
+                    src={imgUrl}
+                    alt="lightbox thumb"
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ⚡ SIZE GUIDE MODAL POPUP */}
       {isSizeGuideOpen && (

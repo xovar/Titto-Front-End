@@ -38,7 +38,7 @@ export default function ProductSortBar({
         <div className="flex items-center gap-2 text-sm">
           <span className="text-neutral-500 whitespace-nowrap">Sort By :</span>
           <select 
-            className="select select-bordered select-sm w-full max-w-37.5 bg-transparent font-normal focus:outline-none"
+            className="select select-bordered select-sm w-full max-w-37.5 bg-white font-normal focus:outline-none"
             value={sortOption}
             onChange={(e) => {
               setSortOption(e.target.value);

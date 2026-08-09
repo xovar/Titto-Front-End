@@ -158,22 +158,26 @@ export default function ProductCard({ product, viewMode = "grid" }) {
       >
         {/* Discount Badge */}
         {product.discount && (
-          <div className="absolute top-4 left-4 bg-[#ea4c3b] text-white text-[10px] font-bold px-2 py-1 rounded z-10">
+          <div className="absolute top-4 left-4 bg-[#ea4c3b] text-white text-[10px] font-bold px-2 py-1 rounded z-10 pointer-events-none">
             -{product.discount}%
           </div>
         )}
 
         {/* Sold Out Tag */}
         {currentStock === 0 && (
-          <div className="absolute top-4 right-4 bg-black text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded z-10 border border-neutral-800 select-none">
+          <div className="absolute top-4 right-4 bg-black text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded z-10 border border-neutral-800 select-none pointer-events-none">
             Sold Out
           </div>
         )}
 
-        {/* Hover Action Buttons */}
-        <div className="absolute w-full rounded-2xl h-83.75 bg-black/60 flex justify-center items-end pb-5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-20">
+        {/* 🟢 1. Hover Overlay-তে pointer-events-none যোগ করা হয়েছে যেন মোবাইলে টাচ ব্লক না করে */}
+        <div className="absolute inset-0 w-full h-full rounded-2xl bg-black/60 flex justify-center items-end pb-5 opacity-0 group-hover/card:opacity-100 pointer-events-none group-hover/card:pointer-events-auto transition-opacity duration-300 z-20">
           <button
-            className={`btn btn-wide cursor-pointer ${currentStock === 0 ? "btn-disabled bg-neutral-800 text-neutral-500 border-none" : ""}`}
+            className={`btn btn-wide cursor-pointer ${
+              currentStock === 0
+                ? "btn-disabled bg-neutral-800 text-neutral-500 border-none"
+                : ""
+            }`}
             disabled={currentStock === 0}
             onClick={(e) => {
               e.stopPropagation();
@@ -186,9 +190,11 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
         {/* Image Container */}
         <div
+          /* 🟢 2. Swiper কন্টেইনারের ভেতরের ক্লিক/সোয়াইপ ইভেন্ট যেন মূল কার্ডকে নেভিগেট না করে */
+          onClick={(e) => e.stopPropagation()}
           className={`${
             isList ? "w-44 h-44 shrink-0" : "w-full aspect-square mb-4"
-          } relative overflow-hidden rounded-xl bg-neutral-50 border border-neutral-100`}
+          } relative overflow-hidden rounded-xl bg-neutral-50 border border-neutral-100 z-10`}
         >
           <Swiper
             key={`${product.id}-${selectedColor}`}
@@ -196,12 +202,19 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             spaceBetween={0}
             slidesPerView={1}
             loop={displayImages.length > 1}
+            /* 🟢 3. মোবাইল টাচ ও সোয়াইপ ফ্রেন্ডলি প্রপস */
+            allowTouchMove={true}
+            preventClicks={true}
+            preventClicksPropagation={true}
+            nested={true}
             autoplay={
               displayImages.length > 1
                 ? { delay: 4000, disableOnInteraction: false }
                 : false
             }
-            pagination={displayImages.length > 1 ? { clickable: true } : false}
+            pagination={
+              displayImages.length > 1 ? { clickable: true } : false
+            }
             className="w-full h-full"
             style={{
               "--swiper-pagination-color": "#ea4c3b",
@@ -226,7 +239,9 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
         {/* Product Metadata */}
         <div
-          className={`flex flex-col items-start text-left pb-4 pl-4 pr-4 w-full ${isList ? "flex-1" : "mt-auto"}`}
+          className={`flex flex-col items-start text-left pb-4 pl-4 pr-4 w-full ${
+            isList ? "flex-1" : "mt-auto"
+          }`}
         >
           <span className="text-[11px] text-neutral-400 uppercase tracking-wider mb-1">
             {product.category && product.category.name}
@@ -299,13 +314,15 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                   return String(a).localeCompare(String(b));
                 })
                 .map((sizeValue) => {
-                  // 🟢 ১. নির্দিষ্ট এই সাইজের স্টক আছে কিনা চেক
                   const sizeObj = activeVariant?.sizes?.find(
                     (s) => s.size === sizeValue,
                   );
-                  
-                  // activeVariant.sizes থাকলে সেখান থেকে স্টক দেখা হচ্ছে, অন্যথায় এভেলেবল ধরা হচ্ছে
-                  const sizeStock = activeVariant?.sizes ? (sizeObj ? sizeObj.stock : 0) : 1;
+
+                  const sizeStock = activeVariant?.sizes
+                    ? sizeObj
+                      ? sizeObj.stock
+                      : 0
+                    : 1;
                   const isOutOfStock = sizeStock === 0;
 
                   const isSelected = currentSizeToShow === sizeValue;
@@ -315,7 +332,9 @@ export default function ProductCard({ product, viewMode = "grid" }) {
                       key={sizeValue}
                       type="button"
                       disabled={isOutOfStock}
-                      title={isOutOfStock ? "Out of Stock" : `Size: ${sizeValue}`}
+                      title={
+                        isOutOfStock ? "Out of Stock" : `Size: ${sizeValue}`
+                      }
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!isOutOfStock) handleSizeClick(sizeValue);
