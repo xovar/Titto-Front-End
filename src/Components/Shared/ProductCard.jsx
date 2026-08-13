@@ -172,12 +172,11 @@ export default function ProductCard({ product, viewMode = "grid" }) {
 
         {/* Image Container Box */}
         <div
-          onClick={(e) => e.stopPropagation()}
           className={`${
             isList ? "w-44 h-44 shrink-0 mb-0" : "w-full aspect-square mb-3"
           } relative overflow-hidden rounded-xl bg-neutral-50 border border-neutral-100 z-10`}
         >
-          {/* 🟢 HOVER OVERLAY - এখন শুধু ইমেজের ওপরেই দেখাবে */}
+          {/* HOVER OVERLAY - Quick View Button */}
           <div className="absolute inset-0 w-full h-full bg-black/40 flex justify-center items-end p-4 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-30 pointer-events-none group-hover/card:pointer-events-auto">
             <button
               type="button"
@@ -188,7 +187,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
               }`}
               disabled={currentStock === 0}
               onClick={(e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // Quick View বাটনে ক্লিক করলে যেন ডিটেইলস পেজে চলে না যায়
                 if (currentStock > 0) setIsModalOpen(true);
               }}
             >
@@ -204,8 +203,8 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             slidesPerView={1}
             loop={displayImages.length > 1}
             allowTouchMove={true}
-            preventClicks={true}
-            preventClicksPropagation={true}
+            preventClicks={false}
+            preventClicksPropagation={false}
             nested={true}
             autoplay={
               displayImages.length > 1
@@ -354,7 +353,7 @@ export default function ProductCard({ product, viewMode = "grid" }) {
             </div>
           </div>
 
-          {/* 📦 LIVE STOCK STATUS INDICATOR */}
+          {/* LIVE STOCK STATUS INDICATOR */}
           <div className="mb-3 w-full">
             {currentStock > 0 ? (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-green-600 uppercase tracking-wider select-none">

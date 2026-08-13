@@ -634,7 +634,7 @@ export default function ProductModal({
 
       {/* 🖼️ FULLSCREEN LIGHTBOX GALLERY MODAL */}
       {isLightboxOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 select-none animate-fadeIn">
+        <div className="fixed inset-0 z-100 bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 select-none animate-fadeIn">
           {/* Top Bar */}
           <div className="w-full flex items-center justify-between text-white z-10 px-2">
             <span className="text-sm font-semibold text-neutral-300 tracking-wider">
