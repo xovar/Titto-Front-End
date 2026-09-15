@@ -6,7 +6,7 @@ import { Navigation, Autoplay, EffectFade } from "swiper/modules";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 // Redux Thunk
-import { fetchBanners } from "../../store/features/banner/bannerSlice"; // আপনার স্লাইসের সঠিক পাথ দিয়ে রিপ্লেস করুন
+import { fetchBanners } from "../../store/features/banner/bannerSlice"; // আপনার স্লাইসের সঠিক পাথ দিয়ে রিপ্লেস করুন
 
 // Import Swiper styles
 import "swiper/css";
@@ -62,7 +62,7 @@ export default function HeroSection() {
   };
 
   return (
-    <div className="w-full max-w-360 mx-auto px-4 lg:px-8 py-6">
+    <div className="w-full mx-auto px-4 md:px-8 lg:px-12 py-6">
       {/* Main Grid: 3 Columns on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
