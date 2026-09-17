@@ -5,6 +5,7 @@ import MensCollection from "../../Components/Home/MensCollection";
 //import PromotionalBanner from "../../Components/Home/PromotionalBanner";
 import WomensCollection from "../../Components/Home/WomensCollection";
 import TopSellingProducts from "../../Components/Home/Topsellingproducts";
+import CategoryWiseSections from "../../Components/Home/CategoryWiseSections";
 //import PromotionalPopup from "../../Components/Shared/PromotionalPopup";
 
 function Home() {
@@ -18,6 +19,7 @@ function Home() {
       <MensCollection />
       <WomensCollection />
       {/* <PromotionalPopup/> */}
+      <CategoryWiseSections />
     </>
   );
 }
