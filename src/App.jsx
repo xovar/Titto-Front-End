@@ -1,5 +1,5 @@
 import { RouterProvider } from 'react-router-dom';
-import { router } from './routes/AppRoutes';
+import { router } from './Routes/AppRoutes';
 // ⚡ ১. এখানে setBrands অ্যাকশনটি যোগ করা হলো
 import { setProducts, setLoading, setError, setCategories, setColor, setBrands } from './store/features/products/productsSlice';
 import { ToastContainer } from 'react-toastify';

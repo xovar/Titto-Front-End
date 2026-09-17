@@ -11,12 +11,13 @@ import Discounts from "../Pages/Discount/Discounts";
 import ContactUs from "../Pages/Contact/Contact";
 import TrackOrder from "../Pages/TrackOrder/TrackOrder";
 import CategoryProducts from "../Components/Shared/CategoryProducts"; // 👈 আপনার ফাইল পাথ অনুযায়ী ইম্পোর্ট চেক করে নেবেন
+import NotFound from "../Components/Shared/NotFound"
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
-    //errorElement: <NotFound />,
+    errorElement: <NotFound />,
     children: [
       {
         index: true,

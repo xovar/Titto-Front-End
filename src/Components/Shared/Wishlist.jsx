@@ -10,24 +10,31 @@ export default function Wishlist() {
   // 📥 Redux Store থেকে উইশলিস্টের ডেটা আনা হচ্ছে
   const wishlistItems = useSelector((state) => state.wishlist.items) || [];
 
-  // ❌ উইশলিস্ট থেকে আইটেম রিমুভ করার হ্যান্ডলার (stopPropagation যোগ করা হয়েছে)
+  // ❌ উইশলিস্ট থেকে আইটেম রিমুভ করার হ্যান্ডলার
   const handleRemove = (e, id) => {
-    e.stopPropagation(); // 👈 এই লাইনটি রো-এর ক্লিক ইভেন্টকে (navigate) ট্রিগার করা থেকে আটকাবে
+    e.stopPropagation();
     dispatch(removeFromWishlist(id));
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 text-left">
+    /* 🛠️ min-h-[65vh] এবং py-12 যুক্ত করা হয়েছে যেন ফুটার গায়ের ওপর না চলে আসে */
+    <div className="max-w-6xl mx-auto px-4 py-12 text-left min-h-[65vh]">
       <h2 className="text-2xl font-black uppercase tracking-wider mb-8 border-b pb-4">
         My Wishlist ({wishlistItems.length})
       </h2>
 
       {wishlistItems.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-neutral-500 font-medium">Your wishlist is empty!</p>
+        <div className="text-center py-20 bg-neutral-50 rounded-2xl border border-neutral-100 my-4">
+          <p className="text-neutral-500 font-medium text-base mb-4">Your wishlist is empty!</p>
+          <button 
+            onClick={() => navigate('/')}
+            className="bg-[#ea4c3b] text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-neutral-900 transition-colors"
+          >
+            Continue Shopping
+          </button>
         </div>
       ) : (
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-x-auto pb-6">
           {/* 💻 Desktop Table View */}
           <table className="w-full hidden md:table border-collapse">
             <thead>
@@ -88,7 +95,7 @@ export default function Wishlist() {
                   <td className="py-5 align-middle text-right">
                     <div className="flex items-center justify-end gap-4">
                       <button
-                        onClick={(e) => handleRemove(e, item.id)} // 👈 ইভেন্ট পাস করা হয়েছে
+                        onClick={(e) => handleRemove(e, item.id)}
                         className="p-2 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer z-10"
                         title="Remove"
                       >
@@ -111,7 +118,7 @@ export default function Wishlist() {
               >
                 {/* Remove Button Mobile */}
                 <button
-                  onClick={(e) => handleRemove(e, item.id)} // 👈 ইভেন্ট পাস করা হয়েছে
+                  onClick={(e) => handleRemove(e, item.id)}
                   className="absolute top-3 right-3 text-neutral-400 hover:text-red-500 cursor-pointer z-10"
                 >
                   <FiX className="w-5 h-5" />
