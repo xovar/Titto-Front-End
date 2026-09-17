@@ -4,6 +4,7 @@ import HeroSlider from "../../Components/Home/HeroSlider";
 import MensCollection from "../../Components/Home/MensCollection";
 //import PromotionalBanner from "../../Components/Home/PromotionalBanner";
 import WomensCollection from "../../Components/Home/WomensCollection";
+import TopSellingProducts from "../../Components/Home/Topsellingproducts";
 //import PromotionalPopup from "../../Components/Shared/PromotionalPopup";
 
 function Home() {
@@ -11,6 +12,7 @@ function Home() {
     <>
       <HeroSlider />
       <FeaturesSection />
+      <TopSellingProducts />
       <BestSeller />
      {/*  <PromotionalBanner /> */}
       <MensCollection />
